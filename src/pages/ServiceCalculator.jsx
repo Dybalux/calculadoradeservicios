@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable'; // Este import 'mágicamente' añade el plugin autoTable a jspdf
-
+import autoTable from 'jspdf-autotable';
 function ServiceCalculator() {
 
     // --- Estados ---
@@ -125,7 +124,6 @@ function ServiceCalculator() {
         const tableColumn = ["Servicio", "Precio ($)"];
         const tableRows = [];
 
-        // Llenamos las filas con los datos de nuestros servicios
         services.forEach(service => {
             const serviceData = [
                 service.name,
@@ -134,11 +132,18 @@ function ServiceCalculator() {
             tableRows.push(serviceData);
         });
 
-        // 4. Dibujar la tabla
-        doc.autoTable(tableColumn, tableRows, { startY: 40 });
+        // 4. Dibujar la tabla (¡AQUÍ ESTÁ EL CAMBIO!)
+        // Ya no usamos doc.autoTable(), sino autoTable(doc, { ... })
+        autoTable(doc, {
+            head: [tableColumn], // La cabecera
+            body: tableRows,     // El cuerpo de la tabla
+            startY: 40           // La posición inicial
+        });
 
         // 5. Calcular el total y añadirlo al final
-        const finalY = doc.lastAutoTable.finalY; // Obtenemos dónde terminó la tabla
+        // Esto sigue funcionando igual, ya que autoTable(doc,...)
+        // todavía adjunta 'lastAutoTable' al objeto 'doc'.
+        const finalY = doc.lastAutoTable.finalY; 
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         doc.text(`Total: $${total.toFixed(2)}`, 14, finalY + 15);
