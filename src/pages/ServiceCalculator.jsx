@@ -1,60 +1,89 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+
+// --- NUEVO: Definimos las "llaves" que usaremos en localStorage
+const SERVICES_STORAGE_KEY = 'calculator_services';
+const ISSUER_STORAGE_KEY = 'calculator_issuer_data';
+
 function ServiceCalculator() {
 
     // --- Estados ---
-
-    const [services, setServices] = useState([]);
+    // Cargamos los servicios desde localStorage al iniciar
+    const [services, setServices] = useState(() => {
+        try {
+            const savedServices = localStorage.getItem(SERVICES_STORAGE_KEY);
+            return savedServices ? JSON.parse(savedServices) : [];
+        } catch (error) {
+            console.error("Error al cargar servicios de localStorage", error);
+            return [];
+        }
+    });
     const [serviceName, setServiceName] = useState('');
     const [servicePrice, setServicePrice] = useState('');
+    // --- NUEVO: Estado para la cantidad (default 1)
+    const [serviceQuantity, setServiceQuantity] = useState(1);
 
-    // NUEVO: Estado para saber qué ID estamos editando. null = ninguno.
     const [editingId, setEditingId] = useState(null);
-
-    // NUEVO: Estados para guardar los valores temporales de edición
     const [editName, setEditName] = useState('');
     const [editPrice, setEditPrice] = useState('');
+    // --- NUEVO: Estado para la cantidad en modo edición
+    const [editQuantity, setEditQuantity] = useState(1);
+    // --- NUEVO: Estados para los datos del cliente y emisor
+    const [clientData, setClientData] = useState({
+        name: '',
+        company: '',
+        email: ''
+    });
+    // --- MODIFICADO: Cargamos los datos del EMISOR desde localStorage
+    const [issuerData, setIssuerData] = useState(() => {
+        try {
+            const savedIssuer = localStorage.getItem(ISSUER_STORAGE_KEY);
+            return savedIssuer ? JSON.parse(savedIssuer) : { name: '', company: '', email: '' };
+        } catch (error) {
+            console.error("Error al cargar datos del emisor", error);
+            return { name: '', company: '', email: '' };
+        }
+    });
+    // --- Efectos (para guardar en localStorage) ---
+
+    // --- NUEVO: Guardar 'services' en localStorage cada vez que cambie
+    useEffect(() => {
+        localStorage.setItem(SERVICES_STORAGE_KEY, JSON.stringify(services));
+    }, [services]); // Esta función se ejecuta cada vez que 'services' se actualiza
+
+    // --- NUEVO: Guardar 'issuerData' en localStorage cada vez que cambie
+    useEffect(() => {
+        localStorage.setItem(ISSUER_STORAGE_KEY, JSON.stringify(issuerData));
+    }, [issuerData]); // Se ejecuta cuando 'issuerData' se actualiza
+
 
     // --- Funciones (Manejadores de Eventos) ---
-
     /**
      * Se llama cuando se envía el formulario (al hacer clic en "Agregar" o presionar Enter).
      */
     const handleAddService = (e) => {
-        // Prevenimos que la página se recargue, que es el comportamiento 
-        // por defecto de un formulario.
         e.preventDefault();
-
-        // Convertimos el precio (string) a un número (flotante).
         const price = parseFloat(servicePrice);
+        const quantity = parseInt(serviceQuantity, 10); // Convertimos a entero
 
-        // Validación simple:
-        // 1. Que el nombre no esté vacío (usamos .trim() para quitar espacios en blanco).
-        // 2. Que el precio sea un número válido (isNaN = Is Not a Number).
-        // 3. Que el precio sea mayor que 0.
-        if (serviceName.trim() === '' || isNaN(price) || price <= 0) {
-            alert('Por favor, ingresa un nombre válido y un precio numérico positivo.');
-            return; // Detenemos la función aquí si la validación falla.
+        // --- MODIFICADO: Validación incluye cantidad
+        if (serviceName.trim() === '' || isNaN(price) || price <= 0 || isNaN(quantity) || quantity <= 0) {
+            alert('Por favor, ingresa nombre, precio positivo y cantidad positiva.');
+            return;
         }
 
-        // Creamos el nuevo objeto de servicio
         const newService = {
-            // Usamos Date.now() como un 'id' simple y único para poder
-            // identificarlo luego (por ejemplo, para borrarlo).
             id: Date.now(),
             name: serviceName.trim(),
-            price: price
+            price: price,
+            quantity: quantity // --- NUEVO: Guardamos la cantidad
         };
 
-        // Actualizamos el estado 'services'
-        // Usamos el "spread operator" (...) para crear un *nuevo* array 
-        // que contiene todos los servicios antiguos MÁS el nuevo.
         setServices([...services, newService]);
-
-        // Limpiamos los campos del formulario para el próximo ingreso
         setServiceName('');
         setServicePrice('');
+        setServiceQuantity(1); // --- NUEVO: Reseteamos la cantidad a 1
     };
 
     /**
@@ -71,109 +100,162 @@ function ServiceCalculator() {
         setServices(updatedServices);
     };
 
-    // NUEVO: Se llama cuando haces clic en "Editar"
+    // --- MODIFICADO: Carga también la cantidad al editar
     const handleEditClick = (service) => {
-        setEditingId(service.id); // Marcamos este ID como "en edición"
-        // Cargamos sus datos actuales en los inputs de edición
+        setEditingId(service.id);
         setEditName(service.name);
-        setEditPrice(service.price.toString()); // El input necesita un string
+        setEditPrice(service.price.toString());
+        setEditQuantity(service.quantity.toString()); // --- NUEVO
     };
 
-    // NUEVO: Se llama cuando haces clic en "Cancelar" (en modo edición)
     const handleCancelEdit = () => {
-        setEditingId(null); // Dejamos de editar
-        setEditName('');
-        setEditPrice('');
+        setEditingId(null);
     };
 
-    // NUEVO: Se llama cuando haces clic en "Guardar" (en modo edición)
+    // --- MODIFICADO: Guarda también la cantidad
     const handleSaveEdit = (idToSave) => {
         const price = parseFloat(editPrice);
+        const quantity = parseInt(editQuantity, 10); // --- NUEVO
 
-        // Validación (igual que al agregar)
-        if (editName.trim() === '' || isNaN(price) || price <= 0) {
-            alert('Por favor, ingresa un nombre válido y un precio numérico positivo.');
+        if (editName.trim() === '' || isNaN(price) || price <= 0 || isNaN(quantity) || quantity <= 0) {
+            alert('Por favor, ingresa nombre, precio positivo y cantidad positiva.');
             return;
         }
 
-        // Usamos .map() para crear un NUEVO array
         const updatedServices = services.map(service => {
-            // Si el ID coincide, devolvemos el servicio con los datos actualizados
             if (service.id === idToSave) {
-                return { ...service, name: editName.trim(), price: price };
+                // --- MODIFICADO: Actualiza precio y cantidad
+                return { ...service, name: editName.trim(), price: price, quantity: quantity };
             }
-            // Si no, devolvemos el servicio tal como estaba
             return service;
         });
 
-        setServices(updatedServices); // Actualizamos el estado con el nuevo array
-        setEditingId(null); // Dejamos de editar
+        setServices(updatedServices);
+        setEditingId(null);
     };
-    // NUEVO: Se llama al hacer clic en "Generar PDF"
+    // --- NUEVO: Manejadores para los formularios de datos
+    const handleClientChange = (e) => {
+        // [e.target.name] usa el 'name' del input (ej: "name", "company") como llave
+        setClientData({ ...clientData, [e.target.name]: e.target.value });
+    };
+
+    const handleIssuerChange = (e) => {
+        setIssuerData({ ...issuerData, [e.target.name]: e.target.value });
+    };
     const handleGeneratePDF = () => {
-        // 1. Crear una nueva instancia de jsPDF
         const doc = new jsPDF();
 
-        // 2. Definir el título y la fecha
-        doc.setFontSize(18);
-        doc.text('Comprobante de Servicios', 14, 22);
-        doc.setFontSize(11);
-        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 30);
+        // --- NUEVO: Sección de Datos (Emisor y Cliente)
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
 
-        // 3. Preparar los datos para la tabla
-        const tableColumn = ["Servicio", "Precio ($)"];
+        // Columna Izquierda: Emisor (Mis Datos)
+        // Asegúrate de que 'issuerData' exista (ej: desde un useState)
+        doc.text('DE:', 14, 20);
+        doc.setFont('helvetica', 'normal');
+        doc.text(issuerData.name || '(Tu Nombre)', 14, 26);
+        doc.text(issuerData.company || '(Tu Empresa)', 14, 32);
+        doc.text(issuerData.email || '(Tu Email)', 14, 38);
+
+        // Columna Derecha: Cliente
+        // Asegúrate de que 'clientData' exista (ej: desde un useState)
+        doc.setFont('helvetica', 'bold');
+        doc.text('PARA:', 105, 20);
+        doc.setFont('helvetica', 'normal');
+        doc.text(clientData.name || '(Nombre Cliente)', 105, 26);
+        doc.text(clientData.company || '(Empresa Cliente)', 105, 32);
+        doc.text(clientData.email || '(Email Cliente)', 105, 38);
+
+        // --- NUEVO: Título principal y Fecha
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Presupuesto de Servicios', 105, 55, { align: 'center' });
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 105, 61, { align: 'center' });
+
+
+        // --- MODIFICADO: Columnas de la tabla
+        const tableColumn = ["Servicio", "Cant.", "P. Unitario ($)", "Subtotal ($)"];
         const tableRows = [];
 
+        // --- MODIFICADO: Filas de la tabla
         services.forEach(service => {
+            // Asegúrate de que 'service.quantity' exista
+            const subtotal = service.price * service.quantity;
             const serviceData = [
                 service.name,
-                service.price.toFixed(2) // Formateado a 2 decimales
+                service.quantity,
+                service.price.toFixed(2),
+                subtotal.toFixed(2) // Subtotal por línea
             ];
             tableRows.push(serviceData);
         });
 
-        // 4. Dibujar la tabla (¡AQUÍ ESTÁ EL CAMBIO!)
-        // Ya no usamos doc.autoTable(), sino autoTable(doc, { ... })
+        // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+        // Usamos la función autoTable() importada
         autoTable(doc, {
-            head: [tableColumn], // La cabecera
-            body: tableRows,     // El cuerpo de la tabla
-            startY: 40           // La posición inicial
+            head: [tableColumn],
+            body: tableRows,
+            startY: 70
         });
+        // --- Fin de la corrección ---
 
-        // 5. Calcular el total y añadirlo al final
-        // Esto sigue funcionando igual, ya que autoTable(doc,...)
-        // todavía adjunta 'lastAutoTable' al objeto 'doc'.
-        const finalY = doc.lastAutoTable.finalY; 
+        const finalY = doc.lastAutoTable.finalY;
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(`Total: $${total.toFixed(2)}`, 14, finalY + 15);
+        // El 'total' (calculado abajo) ya incluye las cantidades
+        doc.text(`Total: $${total.toFixed(2)}`, 196, finalY + 15, { align: 'right' });
 
-        // 6. Guardar el PDF (esto dispara la descarga en el navegador)
-        doc.save('comprobante-servicios.pdf');
+        doc.save('presupuesto-servicios.pdf');
     };
 
     // --- Cálculos (Valores Derivados) ---
 
     // Calculamos el total.
-    // Usamos .reduce() en el array de servicios.
-    // 'total' es el acumulador (empieza en 0).
-    // 'service' es cada item del array.
-    // Por cada servicio, sumamos su 'price' al 'total'.
+    // --- MODIFICADO: El total ahora multiplica precio * cantidad
     const total = services.reduce((accumulator, service) => {
-        return accumulator + service.price;
-    }, 0); // El 0 es el valor inicial del acumulador.
+        return accumulator + (service.price * service.quantity);
+    }, 0);
 
     // --- Estilos ---
     const styles = {
         calculatorContainer: {
             fontFamily: 'Arial, sans-serif',
-            width: '500px', // Un poco más ancho para los botones de edición
+            width: '600px', // --- MODIFICADO: Más ancho
             margin: '20px auto',
             padding: '20px',
             border: '1px solid #ccc',
             borderRadius: '8px',
             boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
         },
+        // --- NUEVO: Estilos para los formularios de datos
+        dataFormsContainer: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '20px',
+            marginBottom: '20px',
+        },
+        dataFormBox: {
+            flex: '1',
+            border: '1px solid #eee',
+            padding: '15px',
+            borderRadius: '6px',
+            backgroundColor: 'gray',
+        },
+        dataFormBoxTitle: {
+            color: 'black',      // Un color oscuro para el texto
+            marginTop: 0,          // Quita el margen superior por defecto del h3
+            marginBottom: '15px'
+        },
+        dataInput: {
+            width: 'calc(100% - 16px)', // Ajuste para padding
+            padding: '8px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            marginBottom: '5px',
+        },
+        // ---
         form: {
             marginBottom: '20px',
         },
@@ -200,21 +282,22 @@ function ServiceCalculator() {
         },
         listTitle: {
             borderBottom: '1px solid #eee',
-            paddingBottom: '5px'
+            paddingBottom: '5px',
+            marginTop: '20px'
         },
         serviceList: {
             listStyleType: 'none',
             padding: 0,
+            minHeight: '50px' // Evita que salte la UI
         },
         serviceItem: {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '8px 0',
+            padding: '10px 5px',
             borderBottom: '1px solid #f0f0f0',
-            gap: '5px', // Pequeño espacio entre elementos
+            gap: '5px',
         },
-        // NUEVO: Estilos para inputs de edición
         editInput: {
             flex: '1',
             padding: '6px',
@@ -222,12 +305,11 @@ function ServiceCalculator() {
             borderRadius: '4px',
         },
         editInputPrice: {
-            width: '80px', // Ancho fijo para el precio
+            width: '80px',
             padding: '6px',
             border: '1px solid #007bff',
             borderRadius: '4px',
         },
-        // NUEVO: Estilos para botones
         editButton: {
             backgroundColor: '#ffc107',
             color: 'black',
@@ -235,7 +317,6 @@ function ServiceCalculator() {
             borderRadius: '4px',
             padding: '5px 8px',
             cursor: 'pointer',
-            marginLeft: '10px',
         },
         deleteButton: {
             backgroundColor: '#dc3545',
@@ -244,7 +325,7 @@ function ServiceCalculator() {
             borderRadius: '4px',
             padding: '5px 8px',
             cursor: 'pointer',
-            marginLeft: '5px', // Espacio entre botones
+            marginLeft: '5px',
         },
         saveButton: {
             backgroundColor: '#28a745',
@@ -267,11 +348,11 @@ function ServiceCalculator() {
             textAlign: 'right',
             marginTop: '20px',
             color: '#28a745',
+            fontSize: '24px',
         },
-        // NUEVO: Estilos para el botón de PDF
         pdfButton: {
             width: '100%',
-            padding: '10px',
+            padding: '12px',
             backgroundColor: '#17a2b8',
             color: 'white',
             border: 'none',
@@ -282,7 +363,7 @@ function ServiceCalculator() {
         },
         pdfButtonDisabled: {
             width: '100%',
-            padding: '10px',
+            padding: '12px',
             backgroundColor: '#ccc',
             color: '#666',
             border: 'none',
@@ -291,13 +372,31 @@ function ServiceCalculator() {
             fontSize: '16px',
             marginTop: '10px',
         }
-    }
+    };
 
     // --- Renderizado ---
     return (
         <div style={styles.calculatorContainer}>
-            <h2>Calculadora de Servicios</h2>
+            <h2>Presupuesto de Servicios</h2>
 
+            {/* --- NUEVO: Formularios de Datos Cliente/Emisor --- */}
+            <div style={styles.dataFormsContainer}>
+                <div style={styles.dataFormBox}>
+                    <h3 style={styles.dataFormBoxTitle}>Datos del Cliente</h3>
+                    <input name="name" placeholder="Nombre del Cliente" value={clientData.name} onChange={handleClientChange} style={styles.dataInput} />
+                    <input name="company" placeholder="Empresa (Opcional)" value={clientData.company} onChange={handleClientChange} style={styles.dataInput} />
+                    <input name="email" type="email" placeholder="Email (Opcional)" value={clientData.email} onChange={handleClientChange} style={styles.dataInput} />
+                </div>
+                <div style={styles.dataFormBox}>
+                    <h3 style={styles.dataFormBoxTitle}>Mis Datos (Emisor)</h3>
+                    <input name="name" placeholder="Tu Nombre" value={issuerData.name} onChange={handleIssuerChange} style={styles.dataInput} />
+                    <input name="company" placeholder="Tu Empresa (Opcional)" value={issuerData.company} onChange={handleIssuerChange} style={styles.dataInput} />
+                    <input name="email" type="email" placeholder="Tu Email (Opcional)" value={issuerData.email} onChange={handleIssuerChange} style={styles.dataInput} />
+                </div>
+            </div>
+
+            {/* Formulario para agregar nuevos servicios */}
+            <h3 style={styles.listTitle}>Agregar Servicio</h3>
             <form onSubmit={handleAddService} style={styles.form}>
                 <div style={styles.inputGroup}>
                     <input
@@ -305,7 +404,17 @@ function ServiceCalculator() {
                         placeholder="Nombre del Servicio"
                         value={serviceName}
                         onChange={(e) => setServiceName(e.target.value)}
-                        style={styles.input}
+                        style={{ ...styles.input, flex: 3 }} // Más espacio para el nombre
+                    />
+                    {/* --- NUEVO: Input de Cantidad --- */}
+                    <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        placeholder="Cant."
+                        value={serviceQuantity}
+                        onChange={(e) => setServiceQuantity(e.target.value)}
+                        style={{ ...styles.input, flex: 1 }}
                     />
                     <input
                         type="number"
@@ -314,7 +423,7 @@ function ServiceCalculator() {
                         placeholder="Precio ($)"
                         value={servicePrice}
                         onChange={(e) => setServicePrice(e.target.value)}
-                        style={styles.input}
+                        style={{ ...styles.input, flex: 1.5 }}
                     />
                 </div>
                 <button type="submit" style={styles.button}>
@@ -322,38 +431,33 @@ function ServiceCalculator() {
                 </button>
             </form>
 
+            {/* Lista de servicios agregados */}
             <h3 style={styles.listTitle}>Servicios Agregados:</h3>
             <ul style={styles.serviceList}>
                 {services.map((service) => (
                     <li key={service.id} style={styles.serviceItem}>
-                        {/* NUEVO: Lógica condicional */}
                         {editingId === service.id ? (
-                            // --- Modo Edición ---
+                            // --- Modo Edición (MODIFICADO) ---
                             <>
-                                <input
-                                    type="text"
-                                    value={editName}
-                                    onChange={(e) => setEditName(e.target.value)}
-                                    style={styles.editInput}
-                                />
-                                <input
-                                    type="number"
-                                    min="0.01"
-                                    step="0.01"
-                                    value={editPrice}
-                                    onChange={(e) => setEditPrice(e.target.value)}
-                                    style={styles.editInputPrice}
-                                />
+                                <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ ...styles.editInput, flex: 2 }} />
+                                {/* --- NUEVO: Input de Cantidad en Edición --- */}
+                                <input type="number" min="1" step="1" value={editQuantity} onChange={(e) => setEditQuantity(e.target.value)} style={{ ...styles.editInputPrice, width: '60px' }} />
+                                <input type="number" min="0.01" step="0.01" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={styles.editInputPrice} />
                                 <button onClick={() => handleSaveEdit(service.id)} style={styles.saveButton}>Guardar</button>
-                                <button onClick={handleCancelEdit} style={styles.cancelButton}>Cancelar</button>
+                                <button onClick={handleCancelEdit} style={styles.cancelButton}>X</button>
                             </>
                         ) : (
-                            // --- Modo Visualización ---
+                            // --- Modo Visualización (MODIFICADO) ---
                             <>
-                                <span>
-                                    {service.name}: <strong>${service.price.toFixed(2)}</strong>
+                                <span style={{ flex: 1 }}>
+                                    {/* Muestra Cantidad y Precio Unitario */}
+                                    {service.name} (x{service.quantity})
                                 </span>
-                                <div>
+                                <span style={{ width: '100px', textAlign: 'right' }}>
+                                    {/* Muestra Subtotal de la línea */}
+                                    <strong>${(service.price * service.quantity).toFixed(2)}</strong>
+                                </span>
+                                <div style={{ marginLeft: '10px' }}>
                                     <button onClick={() => handleEditClick(service)} style={styles.editButton}>
                                         Editar
                                     </button>
@@ -367,18 +471,18 @@ function ServiceCalculator() {
                 ))}
             </ul>
 
+            {/* Total Final */}
             <h2 style={styles.total}>
                 Total: ${total.toFixed(2)}
             </h2>
 
-            {/* NUEVO: Botón para generar el PDF */}
-            {/* Lo desactivamos si no hay servicios para evitar un PDF vacío */}
+            {/* Botón de PDF */}
             <button
                 onClick={handleGeneratePDF}
                 style={services.length > 0 ? styles.pdfButton : styles.pdfButtonDisabled}
                 disabled={services.length === 0}
             >
-                Generar Comprobante PDF
+                Generar Presupuesto PDF
             </button>
         </div>
     );
