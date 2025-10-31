@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable'; // Este import 'mágicamente' añade el plugin autoTable a jspdf
 
 function ServiceCalculator() {
 
-    // --- Estados ---  
-    // 1. `services`: Un array para guardar la lista de servicios. 
-    //    Empieza como un array vacío.
+    // --- Estados ---
+
     const [services, setServices] = useState([]);
-
-    // 2. `serviceName`: Guarda lo que escribes en el campo "Nombre del Servicio".
     const [serviceName, setServiceName] = useState('');
-
-    // 3. `servicePrice`: Guarda lo que escribes en el campo "Precio".
-    //    Lo guardamos como string, luego lo convertiremos a número.
     const [servicePrice, setServicePrice] = useState('');
+
+    // NUEVO: Estado para saber qué ID estamos editando. null = ninguno.
+    const [editingId, setEditingId] = useState(null);
+
+    // NUEVO: Estados para guardar los valores temporales de edición
+    const [editName, setEditName] = useState('');
+    const [editPrice, setEditPrice] = useState('');
 
     // --- Funciones (Manejadores de Eventos) ---
 
@@ -69,6 +72,81 @@ function ServiceCalculator() {
         setServices(updatedServices);
     };
 
+    // NUEVO: Se llama cuando haces clic en "Editar"
+    const handleEditClick = (service) => {
+        setEditingId(service.id); // Marcamos este ID como "en edición"
+        // Cargamos sus datos actuales en los inputs de edición
+        setEditName(service.name);
+        setEditPrice(service.price.toString()); // El input necesita un string
+    };
+
+    // NUEVO: Se llama cuando haces clic en "Cancelar" (en modo edición)
+    const handleCancelEdit = () => {
+        setEditingId(null); // Dejamos de editar
+        setEditName('');
+        setEditPrice('');
+    };
+
+    // NUEVO: Se llama cuando haces clic en "Guardar" (en modo edición)
+    const handleSaveEdit = (idToSave) => {
+        const price = parseFloat(editPrice);
+
+        // Validación (igual que al agregar)
+        if (editName.trim() === '' || isNaN(price) || price <= 0) {
+            alert('Por favor, ingresa un nombre válido y un precio numérico positivo.');
+            return;
+        }
+
+        // Usamos .map() para crear un NUEVO array
+        const updatedServices = services.map(service => {
+            // Si el ID coincide, devolvemos el servicio con los datos actualizados
+            if (service.id === idToSave) {
+                return { ...service, name: editName.trim(), price: price };
+            }
+            // Si no, devolvemos el servicio tal como estaba
+            return service;
+        });
+
+        setServices(updatedServices); // Actualizamos el estado con el nuevo array
+        setEditingId(null); // Dejamos de editar
+    };
+    // NUEVO: Se llama al hacer clic en "Generar PDF"
+    const handleGeneratePDF = () => {
+        // 1. Crear una nueva instancia de jsPDF
+        const doc = new jsPDF();
+
+        // 2. Definir el título y la fecha
+        doc.setFontSize(18);
+        doc.text('Comprobante de Servicios', 14, 22);
+        doc.setFontSize(11);
+        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 30);
+
+        // 3. Preparar los datos para la tabla
+        const tableColumn = ["Servicio", "Precio ($)"];
+        const tableRows = [];
+
+        // Llenamos las filas con los datos de nuestros servicios
+        services.forEach(service => {
+            const serviceData = [
+                service.name,
+                service.price.toFixed(2) // Formateado a 2 decimales
+            ];
+            tableRows.push(serviceData);
+        });
+
+        // 4. Dibujar la tabla
+        doc.autoTable(tableColumn, tableRows, { startY: 40 });
+
+        // 5. Calcular el total y añadirlo al final
+        const finalY = doc.lastAutoTable.finalY; // Obtenemos dónde terminó la tabla
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Total: $${total.toFixed(2)}`, 14, finalY + 15);
+
+        // 6. Guardar el PDF (esto dispara la descarga en el navegador)
+        doc.save('comprobante-servicios.pdf');
+    };
+
     // --- Cálculos (Valores Derivados) ---
 
     // Calculamos el total.
@@ -80,12 +158,141 @@ function ServiceCalculator() {
         return accumulator + service.price;
     }, 0); // El 0 es el valor inicial del acumulador.
 
+    // --- Estilos ---
+    const styles = {
+        calculatorContainer: {
+            fontFamily: 'Arial, sans-serif',
+            width: '500px', // Un poco más ancho para los botones de edición
+            margin: '20px auto',
+            padding: '20px',
+            border: '1px solid #ccc',
+            borderRadius: '8px',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+        },
+        form: {
+            marginBottom: '20px',
+        },
+        inputGroup: {
+            display: 'flex',
+            gap: '10px',
+            marginBottom: '10px',
+        },
+        input: {
+            flex: '1',
+            padding: '8px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+        },
+        button: {
+            width: '100%',
+            padding: '10px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '16px',
+        },
+        listTitle: {
+            borderBottom: '1px solid #eee',
+            paddingBottom: '5px'
+        },
+        serviceList: {
+            listStyleType: 'none',
+            padding: 0,
+        },
+        serviceItem: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '8px 0',
+            borderBottom: '1px solid #f0f0f0',
+            gap: '5px', // Pequeño espacio entre elementos
+        },
+        // NUEVO: Estilos para inputs de edición
+        editInput: {
+            flex: '1',
+            padding: '6px',
+            border: '1px solid #007bff',
+            borderRadius: '4px',
+        },
+        editInputPrice: {
+            width: '80px', // Ancho fijo para el precio
+            padding: '6px',
+            border: '1px solid #007bff',
+            borderRadius: '4px',
+        },
+        // NUEVO: Estilos para botones
+        editButton: {
+            backgroundColor: '#ffc107',
+            color: 'black',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '5px 8px',
+            cursor: 'pointer',
+            marginLeft: '10px',
+        },
+        deleteButton: {
+            backgroundColor: '#dc3545',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '5px 8px',
+            cursor: 'pointer',
+            marginLeft: '5px', // Espacio entre botones
+        },
+        saveButton: {
+            backgroundColor: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '5px 8px',
+            cursor: 'pointer',
+        },
+        cancelButton: {
+            backgroundColor: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '5px 8px',
+            cursor: 'pointer',
+            marginLeft: '5px',
+        },
+        total: {
+            textAlign: 'right',
+            marginTop: '20px',
+            color: '#28a745',
+        },
+        // NUEVO: Estilos para el botón de PDF
+        pdfButton: {
+            width: '100%',
+            padding: '10px',
+            backgroundColor: '#17a2b8',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            marginTop: '10px',
+        },
+        pdfButtonDisabled: {
+            width: '100%',
+            padding: '10px',
+            backgroundColor: '#ccc',
+            color: '#666',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'not-allowed',
+            fontSize: '16px',
+            marginTop: '10px',
+        }
+    }
+
     // --- Renderizado ---
     return (
         <div style={styles.calculatorContainer}>
             <h2>Calculadora de Servicios</h2>
 
-            {/* Formulario para agregar nuevos servicios */}
             <form onSubmit={handleAddService} style={styles.form}>
                 <div style={styles.inputGroup}>
                     <input
@@ -96,9 +303,9 @@ function ServiceCalculator() {
                         style={styles.input}
                     />
                     <input
-                        type="number" // El tipo 'number' ayuda en móviles
+                        type="number"
                         min="0.01"
-                        step="0.01" // Permite decimales
+                        step="0.01"
                         placeholder="Precio ($)"
                         value={servicePrice}
                         onChange={(e) => setServicePrice(e.target.value)}
@@ -110,100 +317,67 @@ function ServiceCalculator() {
                 </button>
             </form>
 
-            {/* Lista de servicios agregados */}
             <h3 style={styles.listTitle}>Servicios Agregados:</h3>
             <ul style={styles.serviceList}>
-                {/* Usamos .map() para "dibujar" un <li> por cada servicio en el estado */}
                 {services.map((service) => (
                     <li key={service.id} style={styles.serviceItem}>
-                        <span>
-                            {service.name}: <strong>${service.price.toFixed(2)}</strong>
-                        </span>
-                        {/* Botón para llamar a la función de eliminar */}
-                        <button
-                            onClick={() => handleDeleteService(service.id)}
-                            style={styles.deleteButton}
-                        >
-                            Eliminar
-                        </button>
+                        {/* NUEVO: Lógica condicional */}
+                        {editingId === service.id ? (
+                            // --- Modo Edición ---
+                            <>
+                                <input
+                                    type="text"
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    style={styles.editInput}
+                                />
+                                <input
+                                    type="number"
+                                    min="0.01"
+                                    step="0.01"
+                                    value={editPrice}
+                                    onChange={(e) => setEditPrice(e.target.value)}
+                                    style={styles.editInputPrice}
+                                />
+                                <button onClick={() => handleSaveEdit(service.id)} style={styles.saveButton}>Guardar</button>
+                                <button onClick={handleCancelEdit} style={styles.cancelButton}>Cancelar</button>
+                            </>
+                        ) : (
+                            // --- Modo Visualización ---
+                            <>
+                                <span>
+                                    {service.name}: <strong>${service.price.toFixed(2)}</strong>
+                                </span>
+                                <div>
+                                    <button onClick={() => handleEditClick(service)} style={styles.editButton}>
+                                        Editar
+                                    </button>
+                                    <button onClick={() => handleDeleteService(service.id)} style={styles.deleteButton}>
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </li>
                 ))}
             </ul>
 
-            {/* Mostramos el total */}
-            {/* .toFixed(2) es para mostrar siempre 2 decimales (ej: 150.00) */}
             <h2 style={styles.total}>
                 Total: ${total.toFixed(2)}
             </h2>
+
+            {/* NUEVO: Botón para generar el PDF */}
+            {/* Lo desactivamos si no hay servicios para evitar un PDF vacío */}
+            <button
+                onClick={handleGeneratePDF}
+                style={services.length > 0 ? styles.pdfButton : styles.pdfButtonDisabled}
+                disabled={services.length === 0}
+            >
+                Generar Comprobante PDF
+            </button>
         </div>
     );
-}
 
-// --- Estilos (Opcional) ---
-// Agrego unos estilos básicos aquí mismo para que se vea ordenado
-// sin necesidad de un archivo CSS externo.
-const styles = {
-    calculatorContainer: {
-        fontFamily: 'Arial, sans-serif',
-        width: '400px',
-        margin: '20px auto',
-        padding: '20px',
-        border: '1px solid #ccc',
-        borderRadius: '8px',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-    },
-    form: {
-        marginBottom: '20px',
-    },
-    inputGroup: {
-        display: 'flex',
-        gap: '10px',
-        marginBottom: '10px',
-    },
-    input: {
-        flex: '1', // Hace que ambos inputs compartan el espacio
-        padding: '8px',
-        border: '1px solid #ddd',
-        borderRadius: '4px',
-    },
-    button: {
-        width: '100%',
-        padding: '10px',
-        backgroundColor: '#007bff',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        fontSize: '16px',
-    },
-    listTitle: {
-        borderBottom: '1px solid #eee',
-        paddingBottom: '5px'
-    },
-    serviceList: {
-        listStyleType: 'none',
-        padding: 0,
-    },
-    serviceItem: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '8px 0',
-        borderBottom: '1px solid #f0f0f0',
-    },
-    deleteButton: {
-        backgroundColor: '#dc3545',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        padding: '5px 8px',
-        cursor: 'pointer',
-    },
-    total: {
-        textAlign: 'right',
-        marginTop: '20px',
-        color: '#28a745',
-    }
-}
+};
 
 export default ServiceCalculator;
