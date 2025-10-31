@@ -4,7 +4,7 @@ import ServiceCalculator from './pages/ServiceCalculator'
 function App() {
   return (
     <>
-      <div className='App'>
+      <div className='flex justify-center items-center h-screen'>
         <ServiceCalculator />
       </div>
     </>
