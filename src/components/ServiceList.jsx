@@ -3,54 +3,43 @@
 import React from 'react';
 import ServiceListItem from './ServiceListItem'; // Importamos el componente de la fila
 
-// Estilos que movimos desde ServiceCalculator
+// --- Estilos de Tailwind ---
 const styles = {
-    listTitle: {
-        borderBottom: '1px solid #eee',
-        paddingBottom: '5px',
-        marginTop: '20px'
-    },
-    serviceList: {
-        listStyleType: 'none',
-        padding: 0,
-        minHeight: '50px' // Evita que salte la UI
-    },
+    listTitle: "border-b border-gray-700 pb-2 mt-5 text-xl font-semibold text-white",
+    serviceList: "list-none p-0 min-h-[50px]", // min-h-[50px] reemplaza minHeight
 };
 
-// Este componente actúa como un "pasamanos" de props.
-// Recibe todas las props del padre (ServiceCalculator)
-// y las pasa al hijo (ServiceListItem).
+// --- 👇 Props CORREGIDAS ---
 function ServiceList({
     services,
     editingId,
-    editName, setEditName,
-    editPrice, setEditPrice,
-    editQuantity, setEditQuantity,
-    editDiscount, setEditDiscount,
+    editForm, // Recibimos el objeto del formulario de edición
+    setEditForm, // Recibimos el setter del formulario de edición
     onSaveEdit,
     onCancelEdit,
     onEditClick,
     onDeleteService
 }) {
+
+    // Creamos un handler unificado para los inputs de edición
+    const handleEditFormChange = (e) => {
+        const { name, value } = e.target;
+        setEditForm(prev => ({ ...prev, [name]: value }));
+    };
+
     return (
         <>
-            <h3 style={styles.listTitle}>Servicios Agregados:</h3>
-            <ul style={styles.serviceList}>
+            <h3 className={styles.listTitle}>Servicios Agregados:</h3>
+            <ul className={styles.serviceList}>
                 {services.map((service) => (
-                    // Por cada servicio, renderiza un ServiceListItem
-                    // y le pasa todas las props que necesita
                     <ServiceListItem
                         key={service.id}
                         service={service}
                         editingId={editingId}
-                        editName={editName}
-                        setEditName={setEditName}
-                        editPrice={editPrice}
-                        setEditPrice={setEditPrice}
-                        editQuantity={editQuantity}
-                        setEditQuantity={setEditQuantity}
-                        editDiscount={editDiscount}
-                        setEditDiscount={setEditDiscount}
+                        // --- 👇 Pasamos las props corregidas ---
+                        editForm={editForm}
+                        onEditFormChange={handleEditFormChange}
+                        // --- Pasamos las acciones ---
                         onSaveEdit={onSaveEdit}
                         onCancelEdit={onCancelEdit}
                         onEditClick={onEditClick}

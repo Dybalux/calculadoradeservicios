@@ -1,63 +1,37 @@
+// src/components/AddServiceForm.jsx
+
 import React from 'react';
 
-// Estilos locales del componente
+// --- Estilos de Tailwind ---
+// Definimos las clases aquí para que el JSX sea limpio
 const styles = {
-    listTitle: {
-        borderBottom: '1px solid #eee',
-        paddingBottom: '5px',
-        marginTop: '20px'
-    },
-    form: {
-        marginBottom: '20px',
-    },
-    inputGroup: {
-        display: 'flex',
-        gap: '10px',
-        marginBottom: '10px',
-    },
-    input: {
-        flex: '1',
-        padding: '8px',
-        border: '1px solid #ddd',
-        borderRadius: '4px',
-        minWidth: 0,
-        backgroundColor: '#ffffff',
-        color: '#213547',
-    },
-    button: {
-        width: '100%',
-        padding: '10px',
-        backgroundColor: '#007bff',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        fontSize: '16px',
-    },
-    catalogSelect: {
-        width: '100%',
-        padding: '8px',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
-        marginBottom: '10px',
-        backgroundColor: '#f8f9fa',
-        color: '#213547',
-    }
+    listTitle: "border-b border-gray-700 pb-2 mt-5 text-xl font-semibold text-white",
+    form: "mb-5",
+    catalogSelect: "w-full p-2.5 border border-gray-600 rounded-md mb-4 bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500",
+    
+    // --- ESTA ES LA CORRECCIÓN ---
+    // 'flex' por defecto es 'flex-row' (horizontal)
+    inputGroup: "flex gap-4 mb-4", 
+    
+    input: "p-2 border border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500",
+    button: "w-full p-2.5 bg-blue-600 text-white rounded-md cursor-pointer text-base font-medium hover:bg-blue-700 transition-colors",
 };
 
-function AddServiceForm({ 
-    formState, 
-    onFormChange, 
-    onAddService, 
-    catalogServices, 
-    onCatalogSelect 
+
+function AddServiceForm({
+    formState,
+    onFormChange,
+    onAddService,
+    catalogServices,
+    onCatalogSelect
 }) {
     return (
         <>
-            <h3 style={styles.listTitle}>Agregar Servicio</h3>
-            <form onSubmit={onAddService} style={styles.form}>
-                
-                <select onChange={onCatalogSelect} style={styles.catalogSelect}>
+            {/* --- JSX con 'className' en lugar de 'style' --- */}
+            <h3 className={styles.listTitle}>Agregar Servicio</h3>
+            <form onSubmit={onAddService} className={styles.form}>
+
+                <select onChange={onCatalogSelect} className={styles.catalogSelect}>
                     <option value="">-- Cargar Servicio desde Catálogo --</option>
                     {catalogServices.map(s => (
                         <option key={s.id} value={s.id}>
@@ -66,48 +40,49 @@ function AddServiceForm({
                     ))}
                 </select>
 
-                <div style={styles.inputGroup}>
+                <div className={styles.inputGroup}>
                     <input
                         type="text"
-                        name="name" // Clave para el handler
+                        name="name" 
                         placeholder="Nombre del Servicio"
                         value={formState.name}
                         onChange={onFormChange}
-                        style={{ ...styles.input, flex: 3 }}
+                        // --- CORRECCIÓN: quitamos el 'md:' ---
+                        className={`${styles.input} flex-[3]`} 
                     />
                     <input
                         type="number"
-                        name="quantity" // Clave para el handler
+                        name="quantity"
                         min="1"
                         step="1"
                         placeholder="Cant."
                         value={formState.quantity}
                         onChange={onFormChange}
-                        style={{ ...styles.input, flex: 1 }}
+                        className={`${styles.input} flex-[1]`}
                     />
                     <input
                         type="number"
-                        name="price" // Clave para el handler
+                        name="price"
                         min="0.01"
                         step="0.01"
                         placeholder="Precio ($)"
                         value={formState.price}
                         onChange={onFormChange}
-                        style={{ ...styles.input, flex: 1.5 }}
+                        className={`${styles.input} flex-[1.5]`}
                     />
                     <input
                         type="number"
-                        name="discount" // Clave para el handler
+                        name="discount"
                         min="0"
                         max="100"
                         step="1"
                         placeholder="Desc. %"
                         value={formState.discount}
                         onChange={onFormChange}
-                        style={{ ...styles.input, flex: 1 }}
+                        className={`${styles.input} flex-[1]`}
                     />
                 </div>
-                <button type="submit" style={styles.button}>
+                <button type="submit" className={styles.button}>
                     Agregar Servicio
                 </button>
             </form>

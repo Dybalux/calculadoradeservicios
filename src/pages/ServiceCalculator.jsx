@@ -1,3 +1,5 @@
+// src/pages/ServiceCalculator.jsx
+
 import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -17,14 +19,9 @@ import { useQuoteData } from '../hooks/useQuoteData';
 function ServiceCalculator() {
 
     // --- LÓGICA / ESTADO ---
-    
-    // Hook para "Datos del Cliente" y "Mis Datos"
+    // (Toda tu lógica y hooks JS permanecen idénticos)
     const { clientData, issuerData, handleClientChange, handleIssuerChange } = useQuoteData();
-
-    // Hook para "Administrar Catálogo" (Modal)
     const { catalogServices, modalState, catalogActions } = useCatalogManager();
-
-    // Hook para "Servicios Agregados" (Lista principal y total)
     const {
         services,
         total,
@@ -33,8 +30,6 @@ function ServiceCalculator() {
         setEditForm,
         actions: serviceActions
     } = useServiceManager();
-
-    // Estado local para el formulario "Agregar Servicio"
     const [newServiceForm, setNewServiceForm] = useState({
         name: '',
         price: '',
@@ -43,25 +38,18 @@ function ServiceCalculator() {
     });
 
     // --- Handlers (Funciones "puente") ---
-
-    // Maneja el formulario de "Agregar Servicio"
+    // (Todas tus funciones handle... permanecen idénticas)
     const handleNewServiceFormChange = (e) => {
         const { name, value } = e.target;
         setNewServiceForm(prev => ({ ...prev, [name]: value }));
     };
-
-    // Se ejecuta al enviar el formulario "Agregar Servicio"
     const handleNewServiceSubmit = (e) => {
         e.preventDefault();
-        // Llama a la acción del hook
         const success = serviceActions.addService(newServiceForm);
-        // Si tuvo éxito, resetea el formulario
         if (success) {
             setNewServiceForm({ name: '', price: '', quantity: 1, discount: '' });
         }
     };
-
-    // Maneja el <select> del catálogo
     const handleCatalogSelect = (e) => {
         const catalogId = e.target.value;
         if (!catalogId) {
@@ -73,13 +61,11 @@ function ServiceCalculator() {
             setNewServiceForm({
                 name: serviceToLoad.name,
                 price: serviceToLoad.price.toString(),
-                quantity: 1, // Siempre resetea a 1
+                quantity: 1,
                 discount: (serviceToLoad.discount || 0).toString()
             });
         }
     };
-
-    // Función de PDF (depende de todos los datos, se queda aquí)
     const handleGeneratePDF = () => {
         const doc = new jsPDF();
         
@@ -146,61 +132,13 @@ function ServiceCalculator() {
     };
 
     // --- Estilos ---
-    // (Solo los estilos que se quedan en este componente)
-    const styles = {
-        calculatorContainer: {
-            fontFamily: 'Arial, sans-serif',
-            width: '600px',
-            margin: '20px auto',
-            padding: '20px',
-            border: '1px solid #ccc',
-            borderRadius: '8px',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-        },
-        total: {
-            textAlign: 'right',
-            marginTop: '20px',
-            color: '#28a745',
-            fontSize: '24px',
-        },
-        pdfButton: {
-            width: '100%',
-            padding: '12px',
-            backgroundColor: '#17a2b8',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            marginTop: '10px',
-        },
-        pdfButtonDisabled: {
-            width: '100%',
-            padding: '12px',
-            backgroundColor: '#ccc',
-            color: '#666',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'not-allowed',
-            fontSize: '16px',
-            marginTop: '10px',
-        },
-        catalogToggleButton: {
-            width: '100%',
-            padding: '8px',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            marginBottom: '20px',
-        },
-    };
+    // ¡YA NO NECESITAMOS EL OBJETO 'styles'!
+    // Lo borramos y lo reemplazamos por clases de Tailwind.
 
     // --- RENDERIZADO ---
     return (
-        <div style={styles.calculatorContainer}>
+        // --- 👇 CAMBIOS AQUÍ 👇 ---
+        <div className="font-sans w-[600px] mx-auto p-5 border border-gray-300 rounded-lg shadow-lg bg-white text-gray-900">
             
             <CatalogManagerModal
                 show={modalState.show}
@@ -216,9 +154,12 @@ function ServiceCalculator() {
                 saveSuccess={modalState.saveSuccess}
             />
 
-            <h2>Presupuesto de Servicios</h2>
+            <h2 className="text-2xl font-bold mb-4">Presupuesto de Servicios</h2>
 
-            <button onClick={catalogActions.toggleModal} style={styles.catalogToggleButton}>
+            <button 
+                onClick={catalogActions.toggleModal} 
+                className="w-full p-2 bg-gray-600 text-white rounded-md cursor-pointer text-sm mb-5 hover:bg-gray-700"
+            >
                 Administrar Catálogo de Servicios
             </button>
 
@@ -241,25 +182,26 @@ function ServiceCalculator() {
                 services={services}
                 editingId={editingId}
                 editForm={editForm}
-                setEditForm={setEditForm} // Pasamos el setter
+                setEditForm={setEditForm}
                 onSaveEdit={serviceActions.saveEdit}
                 onCancelEdit={serviceActions.cancelEdit}
                 onEditClick={serviceActions.startEdit}
                 onDeleteService={serviceActions.deleteService}
             />
 
-            <h2 style={styles.total}>
+            <h2 className="text-right mt-5 text-green-600 text-2xl font-bold">
                 Total: ${total.toFixed(2)}
             </h2>
             
             <button
                 onClick={handleGeneratePDF}
-                style={services.length > 0 ? styles.pdfButton : styles.pdfButtonDisabled}
+                className="w-full p-3 bg-cyan-600 text-white rounded-md cursor-pointer text-base mt-2.5 hover:bg-cyan-700 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed"
                 disabled={services.length === 0}
             >
                 Generar Presupuesto PDF
             </button>
         </div>
+        // --- 👆 FIN DE LOS CAMBIOS 👆 ---
     );
 }
 

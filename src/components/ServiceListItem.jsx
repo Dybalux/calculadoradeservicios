@@ -2,82 +2,29 @@
 
 import React from 'react';
 
-// Estilos que movimos desde ServiceCalculator
+// --- Estilos migrados a Tailwind ---
 const styles = {
-    serviceItem: {
-        display: 'flex',
-        alignItems: 'center',
-        padding: '10px 5px',
-        borderBottom: '1px solid #f0f0f0',
-        gap: '5px',
-    },
-    discountBadge: {
-        backgroundColor: '#28a745',
-        color: 'white',
-        padding: '2px 6px',
-        borderRadius: '10px',
-        fontSize: '10px',
-        marginLeft: '8px',
-        fontWeight: 'bold',
-    },
-    editInput: {
-        flex: '1',
-        padding: '6px',
-        border: '1px solid #007bff',
-        borderRadius: '4px',
-        minWidth: 0,
-    },
-    editInputPrice: {
-        width: '80px',
-        padding: '6px',
-        border: '1px solid #007bff',
-        borderRadius: '4px',
-    },
-    editButton: {
-        backgroundColor: '#ffc107',
-        color: 'black',
-        border: 'none',
-        borderRadius: '4px',
-        padding: '5px 8px',
-        cursor: 'pointer',
-    },
-    deleteButton: {
-        backgroundColor: '#dc3545',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        padding: '5px 8px',
-        cursor: 'pointer',
-        marginLeft: '5px',
-    },
-    saveButton: {
-        backgroundColor: '#28a745',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        padding: '5px 8px',
-        cursor: 'pointer',
-    },
-    cancelButton: {
-        backgroundColor: '#6c757d',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        padding: '5px 8px',
-        cursor: 'pointer',
-        marginLeft: '5px',
-    },
+    serviceItem: "flex items-center gap-2 py-2.5 px-1 border-b border-gray-700",
+    discountBadge: "bg-green-600 text-white text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full",
+    
+    // Clases para los inputs de edición
+    editInput: "flex-1 p-1.5 rounded-md bg-gray-700 text-white border border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0",
+    editInputSmall: "p-1.5 rounded-md bg-gray-700 text-white border border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0",
+    
+    // Clases para los botones
+    editButton: "bg-yellow-500 text-black px-2 py-1.5 rounded-md text-sm font-medium hover:bg-yellow-600 transition-colors",
+    deleteButton: "bg-red-600 text-white px-2 py-1.5 rounded-md text-sm font-medium ml-2 hover:bg-red-700 transition-colors",
+    saveButton: "bg-green-600 text-white px-2 py-1.5 rounded-md text-sm font-medium hover:bg-green-700 transition-colors",
+    cancelButton: "bg-gray-600 text-white px-2 py-1.5 rounded-md text-sm font-medium ml-2 hover:bg-gray-700 transition-colors",
 };
 
-// Este componente recibe MUCHAS props, porque toda la lógica
-// y el estado de "edición" todavía viven en el componente padre.
+
+// --- 👇 Props CORREGIDAS ---
 function ServiceListItem({
     service,
     editingId,
-    editName, setEditName,
-    editPrice, setEditPrice,
-    editQuantity, setEditQuantity,
-    editDiscount, setEditDiscount,
+    editForm,
+    onEditFormChange,
     onSaveEdit,
     onCancelEdit,
     onEditClick,
@@ -87,40 +34,68 @@ function ServiceListItem({
     const isEditing = editingId === service.id;
 
     return (
-        <li 
-            key={service.id} 
-            style={{ 
-                ...styles.serviceItem, 
-                justifyContent: isEditing ? 'flex-start' : 'space-between' 
-            }}
+        <li
+            key={service.id}
+            className={`${styles.serviceItem} ${isEditing ? 'justify-start' : 'justify-between'}`}
         >
             {isEditing ? (
-                // --- Modo Edición ---
+                // --- Modo Edición (con props y clases corregidas) ---
                 <>
-                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ ...styles.editInput, flex: 2 }} />
-                    <input type="number" min="1" step="1" value={editQuantity} onChange={(e) => setEditQuantity(e.target.value)} style={{ ...styles.editInputPrice, width: '50px' }} />
-                    <input type="number" min="0.01" step="0.01" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={{ ...styles.editInputPrice, width: '70px' }} />
-                    <input type="number" min="0" max="100" placeholder="%" value={editDiscount} onChange={(e) => setEditDiscount(e.target.value)} style={{ ...styles.editInputPrice, width: '50px' }} />
-                    <button onClick={() => onSaveEdit(service.id)} style={styles.saveButton}>Guardar</button>
-                    <button onClick={onCancelEdit} style={styles.cancelButton}>X</button>
+                    <input
+                        type="text"
+                        name="name" // Se usa en onEditFormChange
+                        value={editForm.name}
+                        onChange={onEditFormChange}
+                        className={`${styles.editInput} flex-[2]`}
+                    />
+                    <input
+                        type="number"
+                        name="quantity" // Se usa en onEditFormChange
+                        min="1"
+                        step="1"
+                        value={editForm.quantity}
+                        onChange={onEditFormChange}
+                        className={`${styles.editInputSmall} w-[50px]`}
+                    />
+                    <input
+                        type="number"
+                        name="price" // Se usa en onEditFormChange
+                        min="0.01"
+                        step="0.01"
+                        value={editForm.price}
+                        onChange={onEditFormChange}
+                        className={`${styles.editInputSmall} w-[70px]`}
+                    />
+                    <input
+                        type="number"
+                        name="discount" // Se usa en onEditFormChange
+                        min="0"
+                        max="100"
+                        placeholder="%"
+                        value={editForm.discount}
+                        onChange={onEditFormChange}
+                        className={`${styles.editInputSmall} w-[50px]`}
+                    />
+                    <button onClick={() => onSaveEdit(service.id)} className={styles.saveButton}>Guardar</button>
+                    <button onClick={onCancelEdit} className={styles.cancelButton}>X</button>
                 </>
             ) : (
-                // --- Modo Visualización ---
+                // --- Modo Visualización (con clases de Tailwind) ---
                 <>
-                    <span style={{ flex: 1 }}>
+                    <span className="flex-1 text-white truncate" title={service.name}>
                         {service.name} (x{service.quantity})
                         {(service.discount || 0) > 0 && (
-                            <span style={styles.discountBadge}>-{service.discount}%</span>
+                            <span className={styles.discountBadge}>-{service.discount}%</span>
                         )}
                     </span>
-                    <span style={{ width: '100px', textAlign: 'right' }}>
-                        <strong>${((service.price * service.quantity) * (1 - (service.discount || 0) / 100)).toFixed(2)}</strong>
+                    <span className="w-[100px] text-right font-bold text-white">
+                        ${((service.price * service.quantity) * (1 - (service.discount || 0) / 100)).toFixed(2)}
                     </span>
-                    <div style={{ marginLeft: '10px' }}>
-                        <button onClick={() => onEditClick(service)} style={styles.editButton}>
+                    <div className="ml-2.5 flex-shrink-0">
+                        <button onClick={() => onEditClick(service)} className={styles.editButton}>
                             Editar
                         </button>
-                        <button onClick={() => onDeleteService(service.id)} style={styles.deleteButton}>
+                        <button onClick={() => onDeleteService(service.id)} className={styles.deleteButton}>
                             Eliminar
                         </button>
                     </div>
