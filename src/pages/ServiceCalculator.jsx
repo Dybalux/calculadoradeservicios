@@ -6,6 +6,28 @@ import autoTable from 'jspdf-autotable';
 const SERVICES_STORAGE_KEY = 'calculator_services';
 const ISSUER_STORAGE_KEY = 'calculator_issuer_data';
 
+// --- NUEVO: Función para asegurar que los datos del emisor tengan todos los campos
+const getInitialIssuerData = () => {
+    try {
+        const savedIssuer = localStorage.getItem(ISSUER_STORAGE_KEY);
+        const parsedIssuer = savedIssuer ? JSON.parse(savedIssuer) : {};
+
+        // Fusionamos los datos guardados con los valores por defecto
+        // Esto asegura que 'paymentMethods' exista, incluso si el usuario
+        // tenía datos guardados de la versión anterior.
+        return {
+            name: '',
+            company: '',
+            email: '',
+            paymentMethods: '', // --- NUEVO CAMPO
+            ...parsedIssuer // Los datos guardados sobrescriben los defaults
+        };
+    } catch (error) {
+        console.error("Error al cargar datos del emisor", error);
+        return { name: '', company: '', email: '', paymentMethods: '' };
+    }
+};
+
 function ServiceCalculator() {
 
     // --- Estados ---
@@ -15,20 +37,21 @@ function ServiceCalculator() {
             const savedServices = localStorage.getItem(SERVICES_STORAGE_KEY);
             return savedServices ? JSON.parse(savedServices) : [];
         } catch (error) {
-            console.error("Error al cargar servicios de localStorage", error);
             return [];
         }
     });
     const [serviceName, setServiceName] = useState('');
     const [servicePrice, setServicePrice] = useState('');
-    // --- NUEVO: Estado para la cantidad (default 1)
     const [serviceQuantity, setServiceQuantity] = useState(1);
+    // --- NUEVO: Estado para el descuento del nuevo servicio (string, para el input)
+    const [serviceDiscount, setServiceDiscount] = useState('');
 
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
     const [editPrice, setEditPrice] = useState('');
-    // --- NUEVO: Estado para la cantidad en modo edición
     const [editQuantity, setEditQuantity] = useState(1);
+    // --- NUEVO: Estado para el descuento en modo edición
+    const [editDiscount, setEditDiscount] = useState('');
     // --- NUEVO: Estados para los datos del cliente y emisor
     const [clientData, setClientData] = useState({
         name: '',
@@ -36,23 +59,21 @@ function ServiceCalculator() {
         email: ''
     });
     // --- MODIFICADO: Cargamos los datos del EMISOR desde localStorage
-    const [issuerData, setIssuerData] = useState(() => {
-        try {
-            const savedIssuer = localStorage.getItem(ISSUER_STORAGE_KEY);
-            return savedIssuer ? JSON.parse(savedIssuer) : { name: '', company: '', email: '' };
-        } catch (error) {
-            console.error("Error al cargar datos del emisor", error);
-            return { name: '', company: '', email: '' };
-        }
-    });
+    const [issuerData, setIssuerData] = useState(getInitialIssuerData);
+
     // --- Efectos (para guardar en localStorage) ---
 
-    // --- NUEVO: Guardar 'services' en localStorage cada vez que cambie
     useEffect(() => {
-        localStorage.setItem(SERVICES_STORAGE_KEY, JSON.stringify(services));
-    }, [services]); // Esta función se ejecuta cada vez que 'services' se actualiza
+        // --- MODIFICADO: Aseguramos que 'discount' exista
+        // Esto da compatibilidad si el usuario guardó servicios sin descuento
+        const servicesWithDefaults = services.map(s => ({
+            ...s,
+            discount: s.discount || 0
+        }));
+        localStorage.setItem(SERVICES_STORAGE_KEY, JSON.stringify(servicesWithDefaults));
+    }, [services]);
 
-    // --- NUEVO: Guardar 'issuerData' en localStorage cada vez que cambie
+    //Guardar 'issuerData' en localStorage cada vez que cambie
     useEffect(() => {
         localStorage.setItem(ISSUER_STORAGE_KEY, JSON.stringify(issuerData));
     }, [issuerData]); // Se ejecuta cuando 'issuerData' se actualiza
@@ -66,6 +87,7 @@ function ServiceCalculator() {
         e.preventDefault();
         const price = parseFloat(servicePrice);
         const quantity = parseInt(serviceQuantity, 10); // Convertimos a entero
+        const discount = parseFloat(serviceDiscount) || 0;
 
         // --- MODIFICADO: Validación incluye cantidad
         if (serviceName.trim() === '' || isNaN(price) || price <= 0 || isNaN(quantity) || quantity <= 0) {
@@ -77,13 +99,15 @@ function ServiceCalculator() {
             id: Date.now(),
             name: serviceName.trim(),
             price: price,
-            quantity: quantity // --- NUEVO: Guardamos la cantidad
+            quantity: quantity,
+            discount: discount
         };
 
         setServices([...services, newService]);
         setServiceName('');
         setServicePrice('');
-        setServiceQuantity(1); // --- NUEVO: Reseteamos la cantidad a 1
+        setServiceQuantity(1);
+        setServiceDiscount(''); // --- NUEVO: Reseteamos el descuento
     };
 
     /**
@@ -91,13 +115,7 @@ function ServiceCalculator() {
      * Recibe el 'id' del servicio que queremos borrar.
      */
     const handleDeleteService = (idToDelete) => {
-        // Usamos .filter() para crear un *nuevo* array
-        // que incluye solo los servicios cuyo 'id' NO coincide
-        // con el 'id' que queremos borrar.
-        const updatedServices = services.filter(service => service.id !== idToDelete);
-
-        // Actualizamos el estado con el nuevo array filtrado.
-        setServices(updatedServices);
+        setServices(services.filter(service => service.id !== idToDelete));
     };
 
     // --- MODIFICADO: Carga también la cantidad al editar
@@ -105,7 +123,9 @@ function ServiceCalculator() {
         setEditingId(service.id);
         setEditName(service.name);
         setEditPrice(service.price.toString());
-        setEditQuantity(service.quantity.toString()); // --- NUEVO
+        setEditQuantity(service.quantity.toString());
+        // --- NUEVO: Carga el descuento (o 0 si no existe)
+        setEditDiscount((service.discount || 0).toString());
     };
 
     const handleCancelEdit = () => {
@@ -115,7 +135,8 @@ function ServiceCalculator() {
     // --- MODIFICADO: Guarda también la cantidad
     const handleSaveEdit = (idToSave) => {
         const price = parseFloat(editPrice);
-        const quantity = parseInt(editQuantity, 10); // --- NUEVO
+        const quantity = parseInt(editQuantity, 10);
+        const discount = parseFloat(editDiscount) || 0; // --- NUEVO
 
         if (editName.trim() === '' || isNaN(price) || price <= 0 || isNaN(quantity) || quantity <= 0) {
             alert('Por favor, ingresa nombre, precio positivo y cantidad positiva.');
@@ -124,8 +145,8 @@ function ServiceCalculator() {
 
         const updatedServices = services.map(service => {
             if (service.id === idToSave) {
-                // --- MODIFICADO: Actualiza precio y cantidad
-                return { ...service, name: editName.trim(), price: price, quantity: quantity };
+                // --- MODIFICADO: Actualiza precio, cantidad y descuento
+                return { ...service, name: editName.trim(), price: price, quantity: quantity, discount: discount };
             }
             return service;
         });
@@ -175,19 +196,23 @@ function ServiceCalculator() {
         doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 105, 61, { align: 'center' });
 
 
-        // --- MODIFICADO: Columnas de la tabla
-        const tableColumn = ["Servicio", "Cant.", "P. Unitario ($)", "Subtotal ($)"];
+        // --- MODIFICADO: Columnas de la tabla (incluye Desc. %)
+        const tableColumn = ["Servicio", "Cant.", "P. Unit. ($)", "Desc. %", "Subtotal ($)"];
         const tableRows = [];
 
         // --- MODIFICADO: Filas de la tabla
         services.forEach(service => {
-            // Asegúrate de que 'service.quantity' exista
-            const subtotal = service.price * service.quantity;
+            const discount = service.discount || 0;
+            const baseSubtotal = service.price * service.quantity;
+            const discountAmount = baseSubtotal * (discount / 100);
+            const finalSubtotal = baseSubtotal - discountAmount;
+
             const serviceData = [
                 service.name,
                 service.quantity,
                 service.price.toFixed(2),
-                subtotal.toFixed(2) // Subtotal por línea
+                `${discount}%`, // Mostramos el descuento
+                finalSubtotal.toFixed(2) // Subtotal con descuento
             ];
             tableRows.push(serviceData);
         });
@@ -206,16 +231,30 @@ function ServiceCalculator() {
         doc.setFont('helvetica', 'bold');
         // El 'total' (calculado abajo) ya incluye las cantidades
         doc.text(`Total: $${total.toFixed(2)}`, 196, finalY + 15, { align: 'right' });
+        // --- NUEVO: Sección de Métodos de Pago
+        if (issuerData.paymentMethods) {
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Métodos de Pago:', 14, finalY + 25);
 
+            doc.setFont('helvetica', 'normal');
+            // 'splitTextToSize' maneja saltos de línea automáticamente
+            const paymentLines = doc.splitTextToSize(issuerData.paymentMethods, 180);
+            doc.text(paymentLines, 14, finalY + 31);
+        }
         doc.save('presupuesto-servicios.pdf');
     };
 
     // --- Cálculos (Valores Derivados) ---
 
     // Calculamos el total.
-    // --- MODIFICADO: El total ahora multiplica precio * cantidad
+    // --- MODIFICADO: El total ahora resta el descuento
     const total = services.reduce((accumulator, service) => {
-        return accumulator + (service.price * service.quantity);
+        const discount = service.discount || 0;
+        const baseSubtotal = service.price * service.quantity;
+        const discountAmount = baseSubtotal * (discount / 100);
+        const finalSubtotal = baseSubtotal - discountAmount;
+        return accumulator + finalSubtotal;
     }, 0);
 
     // --- Estilos ---
@@ -255,7 +294,15 @@ function ServiceCalculator() {
             borderRadius: '4px',
             marginBottom: '5px',
         },
-        // ---
+        // --- NUEVO: Estilo para el textarea
+        textareaInput: {
+            width: 'calc(100% - 16px)',
+            padding: '8px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            fontFamily: 'Arial, sans-serif',
+            resize: 'vertical', // Permite al usuario ajustar la altura
+        },
         form: {
             marginBottom: '20px',
         },
@@ -269,6 +316,9 @@ function ServiceCalculator() {
             padding: '8px',
             border: '1px solid #ddd',
             borderRadius: '4px',
+            // --- 👇 CORRECCIÓN 1 ---
+            minWidth: 0, // Permite que el input se encoja más allá de su
+                         // contenido (placeholder)
         },
         button: {
             width: '100%',
@@ -298,11 +348,23 @@ function ServiceCalculator() {
             borderBottom: '1px solid #f0f0f0',
             gap: '5px',
         },
+        // --- NUEVO: Estilo para la "etiqueta" de descuento
+        discountBadge: {
+            backgroundColor: '#28a745',
+            color: 'white',
+            padding: '2px 6px',
+            borderRadius: '10px',
+            fontSize: '10px',
+            marginLeft: '8px',
+            fontWeight: 'bold',
+        },
         editInput: {
             flex: '1',
             padding: '6px',
             border: '1px solid #007bff',
             borderRadius: '4px',
+            // --- 👇 CORRECCIÓN 2 ---
+            minWidth: 0, // Misma corrección para el input de nombre en modo edición
         },
         editInputPrice: {
             width: '80px',
@@ -392,6 +454,15 @@ function ServiceCalculator() {
                     <input name="name" placeholder="Tu Nombre" value={issuerData.name} onChange={handleIssuerChange} style={styles.dataInput} />
                     <input name="company" placeholder="Tu Empresa (Opcional)" value={issuerData.company} onChange={handleIssuerChange} style={styles.dataInput} />
                     <input name="email" type="email" placeholder="Tu Email (Opcional)" value={issuerData.email} onChange={handleIssuerChange} style={styles.dataInput} />
+                    {/* --- NUEVO: Textarea para Métodos de Pago --- */}
+                    <textarea
+                        name="paymentMethods"
+                        placeholder="Métodos de pago (ej: CBU, Alias, etc.)"
+                        value={issuerData.paymentMethods}
+                        onChange={handleIssuerChange}
+                        style={styles.textareaInput}
+                        rows={3}
+                    />
                 </div>
             </div>
 
@@ -425,6 +496,17 @@ function ServiceCalculator() {
                         onChange={(e) => setServicePrice(e.target.value)}
                         style={{ ...styles.input, flex: 1.5 }}
                     />
+                    {/* --- NUEVO: Input de Descuento --- */}
+                    <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="1"
+                        placeholder="Desc. %"
+                        value={serviceDiscount}
+                        onChange={(e) => setServiceDiscount(e.target.value)}
+                        style={{ ...styles.input, flex: 1 }}
+                    />
                 </div>
                 <button type="submit" style={styles.button}>
                     Agregar Servicio
@@ -435,14 +517,25 @@ function ServiceCalculator() {
             <h3 style={styles.listTitle}>Servicios Agregados:</h3>
             <ul style={styles.serviceList}>
                 {services.map((service) => (
-                    <li key={service.id} style={styles.serviceItem}>
+                    // --- 👇 CORRECCIÓN 3 ---
+                    // Aplicamos un estilo condicional al 'li'.
+                    // Si editamos, usamos 'flex-start' para alinear todo al inicio.
+                    // Si no, usamos 'space-between' para que se vea como antes.
+                    <li 
+                        key={service.id} 
+                        style={{ 
+                            ...styles.serviceItem, 
+                            justifyContent: editingId === service.id ? 'flex-start' : 'space-between' 
+                        }}
+                    >
                         {editingId === service.id ? (
                             // --- Modo Edición (MODIFICADO) ---
                             <>
                                 <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ ...styles.editInput, flex: 2 }} />
-                                {/* --- NUEVO: Input de Cantidad en Edición --- */}
-                                <input type="number" min="1" step="1" value={editQuantity} onChange={(e) => setEditQuantity(e.target.value)} style={{ ...styles.editInputPrice, width: '60px' }} />
-                                <input type="number" min="0.01" step="0.01" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={styles.editInputPrice} />
+                                <input type="number" min="1" step="1" value={editQuantity} onChange={(e) => setEditQuantity(e.target.value)} style={{ ...styles.editInputPrice, width: '50px' }} />
+                                <input type="number" min="0.01" step="0.01" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={{ ...styles.editInputPrice, width: '70px' }} />
+                                {/* --- NUEVO: Input de Descuento en Edición --- */}
+                                <input type="number" min="0" max="100" placeholder="%" value={editDiscount} onChange={(e) => setEditDiscount(e.target.value)} style={{ ...styles.editInputPrice, width: '50px' }} />
                                 <button onClick={() => handleSaveEdit(service.id)} style={styles.saveButton}>Guardar</button>
                                 <button onClick={handleCancelEdit} style={styles.cancelButton}>X</button>
                             </>
@@ -450,12 +543,15 @@ function ServiceCalculator() {
                             // --- Modo Visualización (MODIFICADO) ---
                             <>
                                 <span style={{ flex: 1 }}>
-                                    {/* Muestra Cantidad y Precio Unitario */}
                                     {service.name} (x{service.quantity})
+                                    {/* --- NUEVO: Muestra el descuento si es mayor a 0 --- */}
+                                    {(service.discount || 0) > 0 && (
+                                        <span style={styles.discountBadge}>-{service.discount}%</span>
+                                    )}
                                 </span>
                                 <span style={{ width: '100px', textAlign: 'right' }}>
-                                    {/* Muestra Subtotal de la línea */}
-                                    <strong>${(service.price * service.quantity).toFixed(2)}</strong>
+                                    {/* Muestra el subtotal con descuento */}
+                                    <strong>${((service.price * service.quantity) * (1 - (service.discount || 0) / 100)).toFixed(2)}</strong>
                                 </span>
                                 <div style={{ marginLeft: '10px' }}>
                                     <button onClick={() => handleEditClick(service)} style={styles.editButton}>
