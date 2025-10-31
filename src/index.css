@@ -67,3 +67,9 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+/* Define la animación de la ruedita (spinner) */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
