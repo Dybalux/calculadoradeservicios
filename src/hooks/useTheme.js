@@ -1,36 +1,59 @@
 // src/hooks/useTheme.js
+import { useEffect, useState } from 'react';
+import usePersistentState from './usePersistentState';
 
-import { useEffect } from 'react';
-import usePersistentState from './usePersistentState'; // Reutilizamos el hook que ya teníamos
+// Función helper para saber la preferencia del sistema
+const getSystemPreference = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
 export function useTheme() {
-    // 1. Iniciamos el estado, leyendo la preferencia del sistema
-    const [theme, setTheme] = usePersistentState('theme', 'system');
+    // 1. El estado guardado puede ser 'light', 'dark', o 'system'
+    const [savedTheme, setSavedTheme] = usePersistentState('theme', 'system');
+    
+    // 2. Estado interno para saber qué se está mostrando AHORA MISMO
+    const [effectiveTheme, setEffectiveTheme] = useState(() => 
+        savedTheme === 'system' ? getSystemPreference() : savedTheme
+    );
 
-    // 2. Este efecto aplica la clase 'dark' o 'light' al <html>
+    // 3. Este efecto aplica la clase al <html> y actualiza el estado 'effectiveTheme'
     useEffect(() => {
         const root = window.document.documentElement;
         const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         
-        root.classList.remove('light', 'dark'); // Limpiamos clases viejas
+        root.classList.remove('light', 'dark');
 
-        if (theme === 'system') {
-            // Si es 'system', usamos la preferencia del OS
-            root.classList.add(systemPrefersDark ? 'dark' : 'light');
+        let currentTheme;
+        if (savedTheme === 'system') {
+            currentTheme = systemPrefersDark ? 'dark' : 'light';
         } else {
-            // Si no, forzamos el tema elegido
-            root.classList.add(theme);
+            currentTheme = savedTheme;
         }
-    }, [theme]); // Se ejecuta cada vez que 'theme' cambia
+        
+        root.classList.add(currentTheme);
+        setEffectiveTheme(currentTheme); // Actualizamos el estado interno
 
-    // 3. Creamos una función simple para alternar
+        // Opcional: Escucha cambios en el OS (si el usuario está en modo 'system')
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleChange = (e) => {
+            if (savedTheme === 'system') {
+                const newSystemTheme = e.matches ? 'dark' : 'light';
+                root.classList.remove('light', 'dark');
+                root.classList.add(newSystemTheme);
+                setEffectiveTheme(newSystemTheme);
+            }
+        };
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+
+    }, [savedTheme]); // Solo se re-ejecuta si el usuario cambia la config
+
+    // 4. EL ARREGLO ESTÁ AQUÍ
     const toggleTheme = () => {
-        // Cambiamos entre 'light' y 'dark'
-        setTheme(prevTheme => {
-            if (prevTheme === 'light') return 'dark';
-            return 'light';
-        });
+        // Al hacer toggle, basamos la decisión en el tema *efectivo* (lo que se ve)
+        // y seteamos el tema a uno explícito ('light' o 'dark'), 
+        // saliendo del modo 'system'.
+        setSavedTheme(effectiveTheme === 'light' ? 'dark' : 'light');
     };
 
-    return { theme, toggleTheme };
+    // 5. Exponemos el tema EFECTIVO para que el ícono sea correcto
+    return { theme: effectiveTheme, toggleTheme };
 }

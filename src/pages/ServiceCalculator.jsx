@@ -10,7 +10,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { useCatalogManager } from '../hooks/useCatalogManager';
 import { useServiceManager } from '../hooks/useServiceManager';
 import { useQuoteData } from '../hooks/useQuoteData';
-// import { useTheme } from '../hooks/useTheme'; // <-- 1. ¡YA NO IMPORTAMOS ESTO!
+// import { useTheme } from '../hooks/useTheme'; // <-- 1. LÍNEA ELIMINADA
 import companyLogo from '../assets/LogoAhijuna.png';
 
 // (Funciones getTodayDateString y formatDateForPDF sin cambios)
@@ -31,7 +31,7 @@ const formatDateForPDF = (dateString) => {
     }
 };
 
-// 2. Recibimos 'theme' y 'toggleTheme' como props
+// 2. Recibimos 'theme' y 'toggleTheme' como props (¡esto está bien!)
 function ServiceCalculator({ theme, toggleTheme }) {
     // --- Lógica de Hooks (sin el useTheme) ---
     const { clientData, issuerData, handleClientChange, handleIssuerChange } = useQuoteData();
@@ -45,7 +45,8 @@ function ServiceCalculator({ theme, toggleTheme }) {
         actions: serviceActions
     } = useServiceManager();
 
-    // --- 3. ¡YA NO LLAMAMOS useTheme() AQUÍ! ---
+    // --- 3. ¡LÍNEA ELIMINADA! ---
+    // const { theme, toggleTheme } = useTheme(); // <-- BORRADA (Línea 59)
 
     // --- Estados locales (sin cambios) ---
     const [newServiceForm, setNewServiceForm] = useState({ name: '', price: '', quantity: 1, discount: '' });
@@ -197,7 +198,7 @@ function ServiceCalculator({ theme, toggleTheme }) {
                                        text-gray-900 dark:text-gray-100"
                         />
                     </div>
-                    {/* --- 4. El botón ahora usa las PROPS --- */}
+                    {/* --- 4. El botón ahora usa las PROPS 'theme' y 'toggleTheme' --- */}
                     <button 
                         onClick={toggleTheme} 
                         className="p-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors self-end"
