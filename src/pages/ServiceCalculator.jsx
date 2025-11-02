@@ -1,5 +1,3 @@
-// src/pages/ServiceCalculator.jsx
-
 import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -15,11 +13,15 @@ import { useCatalogManager } from '../hooks/useCatalogManager';
 import { useServiceManager } from '../hooks/useServiceManager';
 import { useQuoteData } from '../hooks/useQuoteData';
 
+// --- PASO 1: IMPORTA TU LOGO AQUÍ ---
+// Reemplaza 'react.svg' por el nombre de tu archivo (ej: 'mi-logo.png')
+import companyLogo from '../assets/LogoAhijuna.png'; 
+
 
 function ServiceCalculator() {
 
     // --- LÓGICA / ESTADO ---
-    // (Toda tu lógica y hooks JS permanecen idénticos)
+    // (Toda tu lógica de Hooks... sin cambios)
     const { clientData, issuerData, handleClientChange, handleIssuerChange } = useQuoteData();
     const { catalogServices, modalState, catalogActions } = useCatalogManager();
     const {
@@ -38,7 +40,7 @@ function ServiceCalculator() {
     });
 
     // --- Handlers (Funciones "puente") ---
-    // (Todas tus funciones handle... permanecen idénticas)
+    // (Todas las funciones handle... sin cambios)
     const handleNewServiceFormChange = (e) => {
         const { name, value } = e.target;
         setNewServiceForm(prev => ({ ...prev, [name]: value }));
@@ -66,33 +68,44 @@ function ServiceCalculator() {
             });
         }
     };
+
+    // ---  PASO 2: MODIFICA handleGeneratePDF  ---
     const handleGeneratePDF = () => {
         const doc = new jsPDF();
+        
+        // --- 1. AÑADIR EL LOGO ---
+        // doc.addImage(imagen, 'FORMATO', X, Y, Ancho, Alto)
+        // (Asegúrate de que el formato 'PNG', 'JPEG' o 'SVG' sea el correcto)
+        doc.addImage(companyLogo, 'SVG', 14, 15, 30, 30); // 30x30px en la esquina superior izquierda
+
+        // --- 2. AJUSTAR COORDENADAS (MOVER TODO HACIA ABAJO) ---
+        // Movimos todo 40px hacia abajo para dar espacio al logo (ej: 20 -> 60)
         
         // 1. Datos Cliente/Emisor
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text('DE:', 14, 20);
+        doc.text('DE:', 14, 60); // Estaba en 20
         doc.setFont('helvetica', 'normal');
-        doc.text(issuerData.name || '(Tu Nombre)', 14, 26);
-        doc.text(issuerData.company || '(Tu Empresa)', 14, 32);
-        doc.text(issuerData.email || '(Tu Email)', 14, 38);
+        doc.text(issuerData.name || '(Tu Nombre)', 14, 66); // Estaba en 26
+        doc.text(issuerData.company || '(Tu Empresa)', 14, 72); // Estaba en 32
+        doc.text(issuerData.email || '(Tu Email)', 14, 78); // Estaba en 38
+
         doc.setFont('helvetica', 'bold');
-        doc.text('PARA:', 105, 20);
+        doc.text('PARA:', 105, 60); // Estaba en 20
         doc.setFont('helvetica', 'normal');
-        doc.text(clientData.name || '(Nombre Cliente)', 105, 26);
-        doc.text(clientData.company || '(Empresa Cliente)', 105, 32);
-        doc.text(clientData.email || '(Email Cliente)', 105, 38);
+        doc.text(clientData.name || '(Nombre Cliente)', 105, 66); // Estaba en 26
+        doc.text(clientData.company || '(Empresa Cliente)', 105, 72); // Estaba en 32
+        doc.text(clientData.email || '(Email Cliente)', 105, 78); // Estaba en 38
 
         // 2. Título
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
-        doc.text('Presupuesto de Servicios', 105, 55, { align: 'center' });
+        doc.text('Presupuesto de Servicios', 105, 95, { align: 'center' }); // Estaba en 55
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 105, 61, { align: 'center' });
+        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 105, 101, { align: 'center' }); // Estaba en 61
 
-        // 3. Tabla de Servicios
+        // 3. Tabla de Servicios (lógica sin cambios)
         const tableColumn = ["Servicio", "Cant.", "P. Unit. ($)", "Desc. %", "Subtotal ($)"];
         const tableRows = [];
         services.forEach(service => {
@@ -108,13 +121,15 @@ function ServiceCalculator() {
                 finalSubtotal.toFixed(2)
             ]);
         });
+        
+        // --- 3. AJUSTAR INICIO DE LA TABLA ---
         autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
-            startY: 70
+            startY: 110 // Estaba en 70
         });
 
-        // 4. Total y Métodos de Pago
+        // 4. Total y Métodos de Pago (sin cambios, se ajusta solo)
         const finalY = doc.lastAutoTable.finalY;
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
@@ -132,13 +147,62 @@ function ServiceCalculator() {
     };
 
     // --- Estilos ---
-    // ¡YA NO NECESITAMOS EL OBJETO 'styles'!
-    // Lo borramos y lo reemplazamos por clases de Tailwind.
+    // (Sin cambios)
+    const styles = {
+        calculatorContainer: {
+            fontFamily: 'Arial, sans-serif',
+            width: '600px',
+            margin: '20px auto',
+            padding: '20px',
+            border: '1px solid #ccc',
+            borderRadius: '8px',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+        },
+        total: {
+            textAlign: 'right',
+            marginTop: '20px',
+            color: '#28a745',
+            fontSize: '24px',
+        },
+        pdfButton: {
+            width: '100%',
+            padding: '12px',
+            backgroundColor: '#17a2b8',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            marginTop: '10px',
+        },
+        pdfButtonDisabled: {
+            width: '100%',
+            padding: '12px',
+            backgroundColor: '#ccc',
+            color: '#666',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'not-allowed',
+            fontSize: '16px',
+            marginTop: '10px',
+        },
+        catalogToggleButton: {
+            width: '100%',
+            padding: '8px',
+            backgroundColor: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            marginBottom: '20px',
+        },
+    };
 
     // --- RENDERIZADO ---
+    // (El JSX/return no cambia en absoluto)
     return (
-        // --- 👇 CAMBIOS AQUÍ 👇 ---
-        <div className="font-sans w-[600px] mx-auto p-5 border border-gray-300 rounded-lg shadow-lg bg-white text-gray-900">
+        <div style={styles.calculatorContainer}>
             
             <CatalogManagerModal
                 show={modalState.show}
@@ -154,12 +218,9 @@ function ServiceCalculator() {
                 saveSuccess={modalState.saveSuccess}
             />
 
-            <h2 className="text-2xl font-bold mb-4">Presupuesto de Servicios</h2>
+            <h2>Presupuesto de Servicios</h2>
 
-            <button 
-                onClick={catalogActions.toggleModal} 
-                className="w-full p-2 bg-gray-600 text-white rounded-md cursor-pointer text-sm mb-5 hover:bg-gray-700"
-            >
+            <button onClick={catalogActions.toggleModal} style={styles.catalogToggleButton}>
                 Administrar Catálogo de Servicios
             </button>
 
@@ -189,19 +250,18 @@ function ServiceCalculator() {
                 onDeleteService={serviceActions.deleteService}
             />
 
-            <h2 className="text-right mt-5 text-green-600 text-2xl font-bold">
+            <h2 style={styles.total}>
                 Total: ${total.toFixed(2)}
             </h2>
             
             <button
                 onClick={handleGeneratePDF}
-                className="w-full p-3 bg-cyan-600 text-white rounded-md cursor-pointer text-base mt-2.5 hover:bg-cyan-700 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed"
+                style={services.length > 0 ? styles.pdfButton : styles.pdfButtonDisabled}
                 disabled={services.length === 0}
             >
                 Generar Presupuesto PDF
             </button>
         </div>
-        // --- 👆 FIN DE LOS CAMBIOS 👆 ---
     );
 }
 
