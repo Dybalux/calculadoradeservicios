@@ -1,9 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class',
+  darkMode: 'selector', 
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}", // <-- Esta línea es la clave
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {},
