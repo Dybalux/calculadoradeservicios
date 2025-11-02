@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import usePersistentState from './usePersistentState';
+import toast from 'react-hot-toast';
 
 const CATALOG_SERVICES_STORAGE_KEY = 'calculator_catalog_services';
 
@@ -30,7 +31,7 @@ export function useCatalogManager() {
         const discount = parseFloat(catalogForm.discount) || 0;
 
         if (catalogForm.name.trim() === '' || isNaN(price) || price <= 0) {
-            alert('Por favor, ingresa un nombre y precio válido.');
+            toast.error('Por favor, ingresa un nombre y precio válido.');
             return;
         }
 
@@ -60,6 +61,8 @@ export function useCatalogManager() {
             setCatalogForm({ name: '', price: '', discount: '' });
             setIsSaving(false);
             setSaveSuccess(true);
+
+            toast.success(editingCatalogId ? '¡Servicio actualizado!' : '¡Servicio guardado!');
             
             setTimeout(() => {
                 setSaveSuccess(false);
@@ -80,6 +83,7 @@ export function useCatalogManager() {
     const deleteItem = (idToDelete) => {
         if (window.confirm('¿Seguro que quieres eliminar este servicio de tu catálogo?')) {
             setCatalogServices(prevCatalog => prevCatalog.filter(s => s.id !== idToDelete));
+            toast.success('Servicio eliminado del catálogo.');
         }
     };
 
