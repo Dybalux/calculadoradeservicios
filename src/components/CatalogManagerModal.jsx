@@ -2,37 +2,22 @@
 
 import React from 'react';
 
-// Estilos de Tailwind
+// Clases de Tailwind (actualizadas con dark:)
 const styles = {
     overlay: "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1001] p-4",
-    content: "bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl text-gray-900 max-h-[90vh] flex flex-col",
+    content: "bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl text-gray-900 dark:text-gray-100 max-h-[90vh] flex flex-col",
     title: "text-2xl font-bold mb-4",
-    form: "mb-5",
-    
-    // --- 👇 CORRECCIÓN 1: 'md:flex-row' cambiado a 'sm:flex-row' ---
+    form: "mb-5", 
     inputRow: "flex flex-col sm:flex-row gap-4 mb-0", 
-    
-    inputGroup: "flex flex-col flex-1",
-    label: "block font-semibold mb-1 text-sm text-gray-700",
-    input: "w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500",
-    listTitle: "border-b border-gray-200 pb-2 mt-4 text-xl font-bold text-gray-800",
+    inputGroup: "flex flex-col flex-1", 
+    label: "block font-semibold mb-1 text-sm text-gray-700 dark:text-gray-300",
+    input: "w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500",
+    listTitle: "border-b border-gray-200 dark:border-gray-700 pb-2 mt-4 text-xl font-bold",
     listContainer: "flex-1 overflow-y-auto", 
     list: "list-none p-0",
-    
-    // --- 👇 CORRECCIÓN 2: 'md:flex-row' y 'md:items-center' cambiados a 'sm:' ---
-    listItem: "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 py-3 px-2 border-b border-gray-200",
-    
-    listItemText: "text-gray-800",
-    buttonContainer: "flex justify-end gap-4 mt-2",
-    buttonConfirm: "px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 transition-colors",
-    buttonCancel: "px-4 py-2 bg-gray-200 text-gray-800 rounded-md font-medium hover:bg-gray-300 transition-colors",
+    listItem: "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 py-3 px-2 border-b border-gray-200 dark:border-gray-700",
+    listItemText: "text-gray-800 dark:text-gray-100",
     closeButton: "w-full p-2.5 bg-red-600 text-white rounded-md cursor-pointer text-base font-medium hover:bg-red-700 transition-colors mt-6",
-    
-    // --- 👇 CORRECCIÓN 3: 'md:w-auto' cambiado a 'sm:w-auto' ---
-    button: "w-full sm:w-auto p-2.5 bg-blue-600 text-white rounded-md cursor-pointer text-base font-medium hover:bg-blue-700 transition-colors",
-    buttonLoading: "w-full sm:w-auto p-2.5 bg-orange-500 text-white rounded-md cursor-wait text-base font-medium",
-    buttonSuccess: "w-full sm:w-auto p-2.5 bg-green-600 text-white rounded-md cursor-default text-base font-medium",
-
     spinner: "inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 align-middle",
     editButton: "bg-yellow-500 text-black px-2 py-1.5 rounded-md text-sm font-medium hover:bg-yellow-600 transition-colors",
     deleteButton: "bg-red-600 text-white px-2 py-1.5 rounded-md text-sm font-medium ml-2 hover:bg-red-700 transition-colors",
@@ -62,9 +47,7 @@ function CatalogManagerModal({
                 <h2 className={styles.title}>Administrar Catálogo de Servicios</h2>
 
                 <form onSubmit={onSubmit} className={styles.form}>
-                    
                     <div className={styles.inputRow}>
-                        
                         <div className={styles.inputGroup}>
                             <label htmlFor="catalog_name" className={styles.label}>Nombre:</label>
                             <input
@@ -76,7 +59,6 @@ function CatalogManagerModal({
                                 className={styles.input}
                             />
                         </div>
-                        
                         <div className={styles.inputGroup}>
                             <label htmlFor="catalog_price" className={styles.label}>Precio ($):</label>
                             <input
@@ -91,7 +73,6 @@ function CatalogManagerModal({
                                 className={styles.input}
                             />
                         </div>
-                        
                         <div className={styles.inputGroup}>
                             <label htmlFor="catalog_discount" className={styles.label}>Desc. %:</label>
                             <input
@@ -106,13 +87,11 @@ function CatalogManagerModal({
                                 className={styles.input}
                             />
                         </div>
-                        
-                        {/* --- 👇 CORRECCIÓN 4: 'md:mt-0' cambiado a 'sm:mt-0' --- */}
                         <div className="flex items-end mt-4 sm:mt-0">
                             <button
                                 type="submit"
+                                // Usamos style para el color dinámico, className para todo lo demás
                                 style={isSaving ? { backgroundColor: '#f97316' } : (saveSuccess ? { backgroundColor: '#22c55e' } : { backgroundColor: '#2563eb' })}
-                                // --- 👇 CORRECCIÓN 5: 'md:w-auto' cambiado a 'sm:w-auto' ---
                                 className="w-full sm:w-auto p-2.5 text-white rounded-md cursor-pointer text-base font-medium transition-colors"
                                 disabled={isSaving}
                             >
@@ -125,17 +104,14 @@ function CatalogManagerModal({
                                 )}
                             </button>
                         </div>
-
                     </div>
                 </form>
 
-                {/* Lista (con contenedor de scroll) */}
                 <h3 className={styles.listTitle}>Servicios Guardados</h3>
                 <div className={styles.listContainer}>
                     <ul className={styles.list}>
-                        {catalogServices.length === 0 && <li className="text-gray-500 text-center py-4">No hay servicios en tu catálogo.</li>}
+                        {catalogServices.length === 0 && <li className="text-gray-500 dark:text-gray-400 text-center py-4">No hay servicios en tu catálogo.</li>}
                         {catalogServices.map(s => (
-                            // --- 👇 CORRECCIÓN 6: 'md:mt-0' cambiado a 'sm:mt-0' ---
                             <li key={s.id} className={styles.listItem}>
                                 <span className={styles.listItemText}>
                                     {s.name} (${s.price}) {(s.discount || 0) > 0 ? `(-${s.discount}%)` : ''}
@@ -148,7 +124,6 @@ function CatalogManagerModal({
                         ))}
                     </ul>
                 </div>
-
                 <button onClick={onClose} className={styles.closeButton}>Cerrar</button>
             </div>
         </div>
