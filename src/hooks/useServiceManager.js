@@ -84,6 +84,11 @@ export function useServiceManager() {
         toast.success(`"${editForm.name.trim()}" actualizado.`);
     };
 
+    const clearServices = () => {
+        setServices([]);
+        toast.success("Presupuesto limpiado.");
+    };
+
     const total = services.reduce((accumulator, service) => {
         const discount = service.discount || 0;
         const baseSubtotal = service.price * service.quantity;
@@ -104,6 +109,7 @@ export function useServiceManager() {
             startEdit,
             cancelEdit,
             saveEdit,
+            clearServices
         }
     };
 }

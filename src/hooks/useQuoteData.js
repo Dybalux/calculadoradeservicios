@@ -44,10 +44,15 @@ export function useQuoteData() {
         setIssuerData({ ...issuerData, [e.target.name]: e.target.value });
     };
 
+    const clearClientData = () => {
+        setClientData({ name: '', company: '', email: '' });
+    };
+
     return {
         clientData,
         issuerData,
         handleClientChange,
         handleIssuerChange,
+        clearClientData,
     };
 }

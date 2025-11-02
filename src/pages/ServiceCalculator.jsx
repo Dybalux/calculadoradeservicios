@@ -10,7 +10,6 @@ import ConfirmModal from '../components/ConfirmModal';
 import { useCatalogManager } from '../hooks/useCatalogManager';
 import { useServiceManager } from '../hooks/useServiceManager';
 import { useQuoteData } from '../hooks/useQuoteData';
-// import { useTheme } from '../hooks/useTheme'; // <-- 1. LÍNEA ELIMINADA
 import companyLogo from '../assets/LogoAhijuna.png';
 
 // (Funciones getTodayDateString y formatDateForPDF sin cambios)
@@ -79,6 +78,15 @@ function ServiceCalculator({ theme, toggleTheme }) {
                 quantity: 1,
                 discount: (serviceToLoad.discount || 0).toString()
             });
+        }
+    };
+    const handleClearQuote = () => {
+        // Pedimos confirmación
+        if (window.confirm('¿Estás seguro de que quieres limpiar el presupuesto actual? Se borrarán los servicios y datos del cliente.')) {
+            serviceActions.clearServices(); // Limpia la lista de servicios
+            clearClientData(); // Limpia los inputs del cliente
+            setAdvancePayment(''); // Resetea la seña
+            setQuoteDate(getTodayDateString()); // Resetea la fecha
         }
     };
     const handleGeneratePDF = () => {
@@ -289,6 +297,18 @@ function ServiceCalculator({ theme, toggleTheme }) {
                 disabled={services.length === 0}
             >
                 Generar Presupuesto PDF
+            </button>
+            <button
+                onClick={handleClearQuote}
+                className="w-full p-2 bg-gray-500 text-white rounded-md cursor-pointer text-sm mt-3 
+                           hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors
+                           disabled:bg-gray-300 dark:disabled:bg-gray-800
+                           disabled:text-gray-500 dark:disabled:text-gray-600
+                           disabled:cursor-not-allowed"
+                // Se deshabilita si no hay nada que limpiar
+                disabled={services.length === 0 && clientData.name === '' && clientData.company === '' && clientData.email === '' && advancePayment === ''}
+            >
+                Limpiar Presupuesto
             </button>
         </div>
     );
