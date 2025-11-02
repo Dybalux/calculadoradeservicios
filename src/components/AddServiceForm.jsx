@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-// Clases de Tailwind (actualizadas con dark:)
+// Clases de Tailwind (actualizadas con dark: y anchos válidos)
 const styles = {
     listTitle: "border-b border-gray-200 dark:border-gray-700 pb-2 mt-5 text-xl font-bold text-gray-800 dark:text-white",
     form: "mb-5",
@@ -35,6 +35,7 @@ function AddServiceForm({
                 </select>
 
                 <div className={styles.inputGroup}>
+                    {/* --- 👇 CORRECCIÓN: Clases de ancho fraccional (w-N/12) --- */}
                     <input
                         type="text"
                         name="name" 

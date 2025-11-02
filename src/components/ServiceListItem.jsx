@@ -2,15 +2,13 @@
 
 import React from 'react';
 
-// Clases de Tailwind (actualizadas con dark:)
+// Clases de Tailwind (actualizadas con dark: y anchos válidos)
 const styles = {
     serviceItem: "flex flex-wrap items-center gap-2 py-3 px-1 border-b border-gray-200 dark:border-gray-700",
     discountBadge: "bg-green-600 text-white text-xs font-bold ml-2 px-1.5 py-0.5 rounded-full",
     
-    // Inputs de edición
     editInput: "p-1.5 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500",
     
-    // Botones
     editButton: "bg-yellow-500 text-black px-2 py-1.5 rounded-md text-sm font-medium hover:bg-yellow-600 transition-colors",
     deleteButton: "bg-red-600 text-white px-2 py-1.5 rounded-md text-sm font-medium ml-2 hover:bg-red-700 transition-colors",
     saveButton: "bg-green-600 text-white px-2 py-1.5 rounded-md text-sm font-medium hover:bg-green-700 transition-colors",
@@ -37,7 +35,7 @@ function ServiceListItem({
             className={`${styles.serviceItem} ${isEditing ? 'justify-start' : 'justify-between'}`}
         >
             {isEditing ? (
-                // --- Modo Edición (con anchos corregidos) ---
+                // --- 👇 CORRECCIÓN: Modo Edición Responsivo con anchos válidos ---
                 <>
                     <input
                         type="text"

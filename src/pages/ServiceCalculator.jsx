@@ -10,10 +10,10 @@ import ConfirmModal from '../components/ConfirmModal';
 import { useCatalogManager } from '../hooks/useCatalogManager';
 import { useServiceManager } from '../hooks/useServiceManager';
 import { useQuoteData } from '../hooks/useQuoteData';
-import { useTheme } from '../hooks/useTheme'; // <-- 1. Importa el hook de tema
+// import { useTheme } from '../hooks/useTheme'; // <-- 1. ¡YA NO IMPORTAMOS ESTO!
 import companyLogo from '../assets/LogoAhijuna.png';
 
-// --- Funciones Helper (sin cambios) ---
+// (Funciones getTodayDateString y formatDateForPDF sin cambios)
 const getTodayDateString = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -31,8 +31,9 @@ const formatDateForPDF = (dateString) => {
     }
 };
 
-function ServiceCalculator() {
-    // --- Lógica de Hooks (sin cambios) ---
+// 2. Recibimos 'theme' y 'toggleTheme' como props
+function ServiceCalculator({ theme, toggleTheme }) {
+    // --- Lógica de Hooks (sin el useTheme) ---
     const { clientData, issuerData, handleClientChange, handleIssuerChange } = useQuoteData();
     const { catalogServices, modalState, confirmModalState, catalogActions } = useCatalogManager();
     const {
@@ -44,8 +45,7 @@ function ServiceCalculator() {
         actions: serviceActions
     } = useServiceManager();
 
-    // --- 2. Llama al hook de tema ---
-    const { theme, toggleTheme } = useTheme();
+    // --- 3. ¡YA NO LLAMAMOS useTheme() AQUÍ! ---
 
     // --- Estados locales (sin cambios) ---
     const [newServiceForm, setNewServiceForm] = useState({ name: '', price: '', quantity: 1, discount: '' });
@@ -146,10 +146,7 @@ function ServiceCalculator() {
         doc.save('presupuesto-servicios.pdf');
     };
 
-    // --- Estilos ---
-    // ¡BORRAMOS EL OBJETO 'styles'!
-    
-    // --- Cálculos de Totales ---
+    // --- Cálculos de Totales (sin cambios) ---
     const advanceAmount = parseFloat(advancePayment) || 0;
     const remainingBalance = subtotal - advanceAmount;
 
@@ -183,7 +180,6 @@ function ServiceCalculator() {
                 onCancel={catalogActions.cancelDelete}
             />
             
-            {/* --- 4. Título, Fecha y NUEVO Botón de Tema --- */}
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-3xl font-bold text-center sm:text-left">Presupuesto</h2>
                 <div className="flex items-center justify-between sm:justify-end gap-4">
@@ -201,7 +197,7 @@ function ServiceCalculator() {
                                        text-gray-900 dark:text-gray-100"
                         />
                     </div>
-                    {/* --- El botón de Toggle --- */}
+                    {/* --- 4. El botón ahora usa las PROPS --- */}
                     <button 
                         onClick={toggleTheme} 
                         className="p-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors self-end"
@@ -248,7 +244,6 @@ function ServiceCalculator() {
                 onDeleteService={serviceActions.deleteService}
             />
 
-            {/* --- 5. Sección de Totales (actualizada) --- */}
             <div className="mt-5 border-t border-gray-200 dark:border-gray-700 pt-4">
                 <div className="flex justify-between items-center mb-2">
                     <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">Subtotal:</span>
