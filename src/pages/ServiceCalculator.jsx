@@ -1,5 +1,3 @@
-// src/pages/ServiceCalculator.jsx
-
 import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -9,22 +7,51 @@ import CatalogManagerModal from '../components/CatalogManagerModal';
 import ServiceList from '../components/ServiceList';
 import QuoteDataForms from '../components/QuoteDataForms';
 import AddServiceForm from '../components/AddServiceForm';
-import ConfirmModal from '../components/ConfirmModal'; // Importamos el modal de confirmación
+import ConfirmModal from '../components/ConfirmModal'; // <--- ¡Asegúrate de que este import esté!
 
 // Importar Lógica (Hooks)
 import { useCatalogManager } from '../hooks/useCatalogManager';
 import { useServiceManager } from '../hooks/useServiceManager';
 import { useQuoteData } from '../hooks/useQuoteData';
 
-// Importamos el logo
-import companyLogo from '../assets/LogoAhijuna.png'; // Asegúrate que tu logo esté en /assets/
+import companyLogo from '../assets/LogoAhijuna.png';
+
+// --- NUEVA FUNCIÓN HELPER (fuera del componente) ---
+// Para obtener la fecha de hoy en formato YYYY-MM-DD (que usa el input)
+const getTodayDateString = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Los meses son de 0-11
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+// --- NUEVA FUNCIÓN HELPER (fuera del componente) ---
+// Para formatear YYYY-MM-DD a DD/MM/YYYY para el PDF
+const formatDateForPDF = (dateString) => {
+    if (!dateString) return new Date().toLocaleDateString();
+    try {
+        const [year, month, day] = dateString.split('-');
+        return `${day}/${month}/${year}`;
+    } catch (e) {
+        console.error("Error al formatear fecha, usando valor original", e);
+        return dateString; // Devuelve la fecha tal cual si falla
+    }
+};
+
 
 function ServiceCalculator() {
 
     // --- LÓGICA / ESTADO ---
-    // (Toda la lógica de Hooks no cambia)
+    
     const { clientData, issuerData, handleClientChange, handleIssuerChange } = useQuoteData();
-    const { catalogServices, modalState, confirmModalState, catalogActions } = useCatalogManager();
+    const { 
+        catalogServices, 
+        modalState, 
+        confirmModalState,
+        catalogActions 
+    } = useCatalogManager();
+
     const {
         services,
         total: subtotal,
@@ -33,17 +60,21 @@ function ServiceCalculator() {
         setEditForm,
         actions: serviceActions
     } = useServiceManager();
+
     const [newServiceForm, setNewServiceForm] = useState({
         name: '',
         price: '',
         quantity: 1,
         discount: ''
     });
+
     const [advancePayment, setAdvancePayment] = useState('');
 
+    // --- NUEVO ESTADO para la fecha ---
+    const [quoteDate, setQuoteDate] = useState(getTodayDateString());
 
     // --- Handlers (Funciones "puente") ---
-    // (Todas las funciones handle... no cambian)
+    // (No hay cambios en los handlers)
     const handleNewServiceFormChange = (e) => {
         const { name, value } = e.target;
         setNewServiceForm(prev => ({ ...prev, [name]: value }));
@@ -71,9 +102,13 @@ function ServiceCalculator() {
             });
         }
     };
+
+    // --- handleGeneratePDF MODIFICADO ---
     const handleGeneratePDF = () => {
         const doc = new jsPDF();
-        doc.addImage(companyLogo, 'SVG', 14, 15, 30, 30);
+        
+        doc.addImage(companyLogo, 'PNG', 14, 15, 30, 30); // <- Cambié 'SVG' a 'PNG' (asumiendo por el nombre del archivo)
+
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.text('DE:', 14, 60);
@@ -87,12 +122,16 @@ function ServiceCalculator() {
         doc.text(clientData.name || '(Nombre Cliente)', 105, 66);
         doc.text(clientData.company || '(Empresa Cliente)', 105, 72);
         doc.text(clientData.email || '(Email Cliente)', 105, 78);
+
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
         doc.text('Presupuesto de Servicios', 105, 95, { align: 'center' });
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 105, 101, { align: 'center' });
+        
+        // --- CAMBIO AQUÍ: Usamos la fecha del estado ---
+        doc.text(`Fecha: ${formatDateForPDF(quoteDate)}`, 105, 101, { align: 'center' });
+
         const tableColumn = ["Servicio", "Cant.", "P. Unit. ($)", "Desc. %", "Subtotal ($)"];
         const tableRows = [];
         services.forEach(service => {
@@ -113,40 +152,161 @@ function ServiceCalculator() {
             body: tableRows,
             startY: 110
         });
+
         const finalY = doc.lastAutoTable.finalY;
         const advanceAmountPDF = parseFloat(advancePayment) || 0;
         const remainingBalancePDF = subtotal - advanceAmountPDF;
+
         doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
         doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 196, finalY + 15, { align: 'right' });
+        
         if (advanceAmountPDF > 0) {
             doc.text(`Seña: -$${advanceAmountPDF.toFixed(2)}`, 196, finalY + 22, { align: 'right' });
         }
+        
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         doc.text(`Balance Pendiente: $${remainingBalancePDF.toFixed(2)}`, 196, finalY + 30, { align: 'right' });
+
         if (issuerData.paymentMethods) {
             doc.setFontSize(11);
             doc.setFont('helvetica', 'bold');
-            doc.text('Métodos de Pago:', 14, finalY + 40);
+            doc.text('Métodos de Pago:', 14, finalY + 40); 
             doc.setFont('helvetica', 'normal');
             const paymentLines = doc.splitTextToSize(issuerData.paymentMethods, 180);
             doc.text(paymentLines, 14, finalY + 46);
         }
+        
         doc.save('presupuesto-servicios.pdf');
     };
 
     // --- Estilos ---
-    // ¡BORRAMOS EL OBJETO 'styles' GIGANTE!
-    // Usaremos Tailwind directamente.
+    // --- CAMBIO: Añadimos estilos para el input de fecha ---
+    const styles = {
+        calculatorContainer: {
+            fontFamily: 'Arial, sans-serif',
+            width: '600px',
+            margin: '20px auto',
+            padding: '20px',
+            border: '1px solid #ccc',
+            borderRadius: '8px',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+        },
+        
+        // --- NUEVOS ESTILOS AQUÍ ---
+        headerContainer: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px',
+            paddingBottom: '20px',
+            borderBottom: '1px solid #eee',
+        },
+        headerTitle: {
+            margin: 0, // Quitamos el margen por defecto de h2
+            fontSize: '24px',
+            color: '#333' // Aseguramos color de texto
+        },
+        dateInputGroup: {
+            display: 'flex',
+            flexDirection: 'column',
+        },
+        dateLabel: {
+            fontSize: '12px',
+            color: '#555',
+            marginBottom: '4px',
+            fontWeight: 'bold',
+        },
+        dateInput: {
+            padding: '8px',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            fontSize: '14px',
+            color: '#213547',
+            backgroundColor: '#ffffff',
+        },
+        // --- FIN DE NUEVOS ESTILOS ---
+
+        summarySection: {
+            marginTop: '20px',
+            borderTop: '1px solid #eee',
+            paddingTop: '15px',
+        },
+        summaryRow: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '8px',
+        },
+        summaryLabel: {
+            fontSize: '16px',
+            fontWeight: 'bold',
+            color: '#555',
+        },
+        summaryAmount: {
+            fontSize: '18px',
+            fontWeight: 'bold',
+            color: '#333',
+        },
+        advanceInput: { 
+            fontSize: '16px',
+            fontWeight: 'bold',
+            padding: '5px 8px',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            width: '120px',
+            textAlign: 'right',
+            backgroundColor: '#ffffff', 
+            color: '#213547',          
+        },
+        finalBalance: {
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: '#28a745', 
+        },
+        pdfButton: {
+            width: '100%',
+            padding: '12px',
+            backgroundColor: '#17a2b8',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            marginTop: '10px',
+        },
+        pdfButtonDisabled: {
+            width: '100%',
+            padding: '12px',
+            backgroundColor: '#ccc',
+            color: '#666',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'not-allowed',
+            fontSize: '16px',
+            marginTop: '10px',
+        },
+        catalogToggleButton: {
+            width: '100%',
+            padding: '8px',
+            backgroundColor: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            marginBottom: '20px',
+        },
+    };
 
     // --- Cálculos de Totales ---
     const advanceAmount = parseFloat(advancePayment) || 0;
     const remainingBalance = subtotal - advanceAmount;
 
-    // --- RENDERIZADO (con Tailwind y Responsivo) ---
+    // --- RENDERIZADO ---
     return (
-        <div className="font-sans w-full max-w-3xl mx-auto p-5 rounded-lg shadow-lg bg-white text-gray-900">
+        <div style={styles.calculatorContainer}>
             
             <CatalogManagerModal
                 show={modalState.show}
@@ -170,12 +330,25 @@ function ServiceCalculator() {
                 onCancel={catalogActions.cancelDelete}
             />
             
-            <h2 className="text-3xl font-bold text-center mb-6">Presupuesto de Servicios</h2>
+            {/* --- CAMBIO: Título y Fecha ahora en un div --- */}
+            <div style={styles.headerContainer}>
+                <h2 style={styles.headerTitle}>Presupuesto de Servicios</h2>
+                <div style={styles.dateInputGroup}>
+                    <label htmlFor="quoteDate" style={styles.dateLabel}>
+                        Fecha del Presupuesto:
+                    </label>
+                    <input
+                        id="quoteDate"
+                        type="date"
+                        value={quoteDate}
+                        onChange={(e) => setQuoteDate(e.target.value)}
+                        style={styles.dateInput}
+                    />
+                </div>
+            </div>
+            {/* --- Fin del cambio --- */}
 
-            <button 
-                onClick={catalogActions.toggleModal} 
-                className="w-full p-2 bg-gray-600 text-white rounded-md cursor-pointer text-sm mb-6 hover:bg-gray-700 transition-colors"
-            >
+            <button onClick={catalogActions.toggleModal} style={styles.catalogToggleButton}>
                 Administrar Catálogo de Servicios
             </button>
 
@@ -205,15 +378,14 @@ function ServiceCalculator() {
                 onDeleteService={serviceActions.deleteService}
             />
 
-            {/* Sección de Totales (migrada a Tailwind) */}
-            <div className="mt-5 border-t border-gray-200 pt-4">
-                <div className="flex justify-between items-center mb-2">
-                    <span className="text-lg font-semibold text-gray-700">Subtotal:</span>
-                    <span className="text-lg font-bold text-gray-800">${subtotal.toFixed(2)}</span>
+            {/* (Sección de Totales sin cambios) */}
+            <div style={styles.summarySection}>
+                <div style={styles.summaryRow}>
+                    <span style={styles.summaryLabel}>Subtotal:</span>
+                    <span style={styles.summaryAmount}>${subtotal.toFixed(2)}</span>
                 </div>
-                
-                <div className="flex justify-between items-center mb-2">
-                    <label htmlFor="advancePayment" className="text-lg font-semibold text-gray-700">
+                <div style={styles.summaryRow}>
+                    <label htmlFor="advancePayment" style={styles.summaryLabel}>
                         Seña/Adelanto:
                     </label>
                     <input
@@ -224,15 +396,14 @@ function ServiceCalculator() {
                         placeholder="0.00"
                         value={advancePayment}
                         onChange={(e) => setAdvancePayment(e.target.value)}
-                        className="w-[130px] p-2 border border-gray-300 rounded-md text-right font-bold text-lg text-gray-800 bg-white"
+                        style={styles.advanceInput}
                     />
                 </div>
-
-                <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-                    <span className="text-2xl font-bold text-green-600">
+                <div style={styles.summaryRow}>
+                    <span style={{...styles.summaryLabel, ...styles.finalBalance}}>
                         Balance Pendiente:
                     </span>
-                    <span className="text-2xl font-bold text-green-600">
+                    <span style={{...styles.summaryAmount, ...styles.finalBalance}}>
                         ${remainingBalance.toFixed(2)}
                     </span>
                 </div>
@@ -240,7 +411,7 @@ function ServiceCalculator() {
             
             <button
                 onClick={handleGeneratePDF}
-                className="w-full p-3 bg-cyan-600 text-white rounded-md cursor-pointer text-lg font-medium mt-6 hover:bg-cyan-700 transition-colors disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed"
+                style={services.length > 0 ? styles.pdfButton : styles.pdfButtonDisabled}
                 disabled={services.length === 0}
             >
                 Generar Presupuesto PDF
