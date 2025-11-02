@@ -13,6 +13,10 @@ export function useCatalogManager() {
     const [editingCatalogId, setEditingCatalogId] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [confirmState, setConfirmState] = useState({
+        isOpen: false,
+        idToDelete: null,
+    });
 
     // --- Acciones del Catálogo ---
     const toggleModal = () => {
@@ -79,12 +83,35 @@ export function useCatalogManager() {
             discount: (service.discount || 0).toString()
         });
     };
-
+    
+    // Ya no borra, solo abre el modal de confirmación
     const deleteItem = (idToDelete) => {
-        if (window.confirm('¿Seguro que quieres eliminar este servicio de tu catálogo?')) {
-            setCatalogServices(prevCatalog => prevCatalog.filter(s => s.id !== idToDelete));
-            toast.success('Servicio eliminado del catálogo.');
+        setConfirmState({
+            isOpen: true,
+            idToDelete: idToDelete,
+        });
+    };
+
+    // Cierra el modal de confirmación
+    const cancelDelete = () => {
+        setConfirmState({
+            isOpen: false,
+            idToDelete: null,
+        });
+    };
+
+    // Se ejecuta si el usuario confirma la eliminación
+    const confirmDelete = () => {
+        const itemToDelete = catalogServices.find(s => s.id === confirmState.idToDelete);
+        
+        setCatalogServices(prevCatalog => prevCatalog.filter(s => s.id !== confirmState.idToDelete));
+        
+        if (itemToDelete) {
+            toast.success(`"${itemToDelete.name}" eliminado del catálogo.`);
         }
+        
+        // Cierra el modal
+        cancelDelete();
     };
 
     return {
@@ -96,12 +123,15 @@ export function useCatalogManager() {
             isSaving: isSaving,
             saveSuccess: saveSuccess,
         },
+        confirmModalState: confirmState,
         catalogActions: {
             toggleModal,
             handleFormChange,
             handleSubmit,
             startEdit,
             deleteItem,
+            cancelDelete,
+            confirmDelete,
         }
     };
 }

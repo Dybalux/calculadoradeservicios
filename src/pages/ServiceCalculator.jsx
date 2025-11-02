@@ -7,6 +7,7 @@ import CatalogManagerModal from '../components/CatalogManagerModal';
 import ServiceList from '../components/ServiceList';
 import QuoteDataForms from '../components/QuoteDataForms';
 import AddServiceForm from '../components/AddServiceForm';
+import ConfirmModal from '../components/ConfirmModal';
 
 // Importar Lógica (Hooks)
 import { useCatalogManager } from '../hooks/useCatalogManager';
@@ -23,7 +24,13 @@ function ServiceCalculator() {
     // --- LÓGICA / ESTADO ---
     
     const { clientData, issuerData, handleClientChange, handleIssuerChange } = useQuoteData();
-    const { catalogServices, modalState, catalogActions } = useCatalogManager();
+    const { 
+        catalogServices, 
+        modalState, 
+        confirmModalState,
+        catalogActions 
+    } = useCatalogManager();
+
 
     // --- CAMBIO 2: Renombramos 'total' a 'subtotal' y añadimos 'advancePayment' ---
     const {
@@ -269,6 +276,14 @@ function ServiceCalculator() {
                 saveSuccess={modalState.saveSuccess}
             />
 
+            <ConfirmModal
+                show={confirmModalState.isOpen}
+                title="Confirmar Eliminación"
+                message="¿Estás seguro de que quieres eliminar este servicio del catálogo? Esta acción no se puede deshacer."
+                onConfirm={catalogActions.confirmDelete} // <-- El handler de confirmar
+                onCancel={catalogActions.cancelDelete}   // <-- El handler de cancelar
+            />
+            
             <h2>Presupuesto de Servicios</h2>
 
             <button onClick={catalogActions.toggleModal} style={styles.catalogToggleButton}>
