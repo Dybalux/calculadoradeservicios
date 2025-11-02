@@ -2,77 +2,33 @@
 
 import React from 'react';
 
-// --- ¡El objeto 'styles' se eliminó! ---
+// Clases de Tailwind
+const styles = {
+    container: "flex flex-col md:flex-row justify-between gap-6 mb-6",
+    formBox: "flex-1 border border-gray-200 p-4 rounded-lg bg-gray-50", // Fondo gris claro
+    title: "text-xl font-bold text-gray-800 mt-0 mb-4",
+    input: "w-full p-2 border border-gray-300 rounded-md mb-2 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500",
+    textarea: "w-full p-2 border border-gray-300 rounded-md mb-2 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"
+};
 
 function QuoteDataForms({ clientData, issuerData, onClientChange, onIssuerChange }) {
-    
-    // Clases de Tailwind reutilizables
-    const formBoxClass = "flex-1 border border-gray-700 p-4 rounded-md bg-gray-800";
-    const titleClass = "text-lg font-semibold text-white mt-0 mb-4";
-    const inputClass = "w-full p-2 border border-gray-600 rounded-md mb-2 bg-gray-700 text-white placeholder-gray-400";
-    const textareaClass = `${inputClass} resize-vertical`; // Reutiliza y añade 'resize'
-
     return (
-        // --- 👇 Clases de Tailwind aplicadas 👇 ---
-        <div className="flex flex-col md:flex-row justify-between gap-5 mb-5">
-            
-            <div className={formBoxClass}>
-                <h3 className={titleClass}>Datos del Cliente</h3>
-                <input 
-                    name="name" 
-                    placeholder="Nombre del Cliente" 
-                    value={clientData.name} 
-                    onChange={onClientChange} 
-                    className={inputClass} 
-                />
-                <input 
-                    name="company" 
-                    placeholder="Empresa (Opcional)" 
-                    value={clientData.company} 
-                    onChange={onClientChange} 
-                    className={inputClass} 
-                />
-                <input 
-                    name="email" 
-                    type="email" 
-                    placeholder="Email (Opcional)" 
-                    value={clientData.email} 
-                    onChange={onClientChange} 
-                    className={inputClass} 
-                />
+        <div className={styles.container}>
+            <div className={styles.formBox}>
+                <h3 className={styles.title}>Datos del Cliente</h3>
+                <input name="name" placeholder="Nombre del Cliente" value={clientData.name} onChange={onClientChange} className={styles.input} />
+                <input name="company" placeholder="Empresa (Opcional)" value={clientData.company} onChange={onClientChange} className={styles.input} />
+                <input name="email" type="email" placeholder="Email (Opcional)" value={clientData.email} onChange={onClientChange} className={styles.input} />
             </div>
-            
-            <div className={formBoxClass}>
-                <h3 className={titleClass}>Mis Datos (Emisor)</h3>
-                <input 
-                    name="name" 
-                    placeholder="Tu Nombre" 
-                    value={issuerData.name} 
-                    onChange={onIssuerChange} 
-                    className={inputClass} 
-                />
-                <input 
-                    name="company" 
-                    placeholder="Tu Empresa (Opcional)" 
-                    value={issuerData.company} 
-                    onChange={onIssuerChange} 
-                    className={inputClass} 
-                />
-                <input 
-                    name="email" 
-                    type="email" 
-                    placeholder="Tu Email (Opcional)" 
-                    value={issuerData.email} 
-                    onChange={onIssuerChange} 
-                    className={inputClass} 
-                />
+            <div className={styles.formBox}>
+                <h3 className={styles.title}>Mis Datos (Emisor)</h3>
+                <input name="name" placeholder="Tu Nombre" value={issuerData.name} onChange={onIssuerChange} className={styles.input} />
+                <input name="company" placeholder="Tu Empresa (Opcional)" value={issuerData.company} onChange={onIssuerChange} className={styles.input} />
+                <input name="email" type="email" placeholder="Tu Email (Opcional)" value={issuerData.email} onChange={onIssuerChange} className={styles.input} />
                 <textarea
-                    name="paymentMethods" 
-                    placeholder="Métodos de pago (ej: CBU, Alias, etc.)"
-                    value={issuerData.paymentMethods} 
-                    onChange={onIssuerChange}
-                    className={textareaClass} 
-                    rows={3}
+                    name="paymentMethods" placeholder="Métodos de pago (ej: CBU, Alias, etc.)"
+                    value={issuerData.paymentMethods} onChange={onIssuerChange}
+                    className={styles.textarea} rows={3}
                 />
             </div>
         </div>

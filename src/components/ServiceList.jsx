@@ -1,27 +1,25 @@
 // src/components/ServiceList.jsx
 
 import React from 'react';
-import ServiceListItem from './ServiceListItem'; // Importamos el componente de la fila
+import ServiceListItem from './ServiceListItem';
 
-// --- Estilos de Tailwind ---
+// Clases de Tailwind
 const styles = {
-    listTitle: "border-b border-gray-700 pb-2 mt-5 text-xl font-semibold text-white",
-    serviceList: "list-none p-0 min-h-[50px]", // min-h-[50px] reemplaza minHeight
+    listTitle: "border-b border-gray-200 pb-2 mt-5 text-xl font-bold text-gray-800",
+    serviceList: "list-none p-0 min-h-[50px]",
 };
 
-// --- 👇 Props CORREGIDAS ---
 function ServiceList({
     services,
     editingId,
-    editForm, // Recibimos el objeto del formulario de edición
-    setEditForm, // Recibimos el setter del formulario de edición
+    editForm, 
+    setEditForm,
     onSaveEdit,
     onCancelEdit,
     onEditClick,
     onDeleteService
 }) {
 
-    // Creamos un handler unificado para los inputs de edición
     const handleEditFormChange = (e) => {
         const { name, value } = e.target;
         setEditForm(prev => ({ ...prev, [name]: value }));
@@ -31,15 +29,16 @@ function ServiceList({
         <>
             <h3 className={styles.listTitle}>Servicios Agregados:</h3>
             <ul className={styles.serviceList}>
+                {services.length === 0 && (
+                    <li className="text-gray-500 text-center py-4">No hay servicios agregados.</li>
+                )}
                 {services.map((service) => (
                     <ServiceListItem
                         key={service.id}
                         service={service}
                         editingId={editingId}
-                        // --- 👇 Pasamos las props corregidas ---
                         editForm={editForm}
                         onEditFormChange={handleEditFormChange}
-                        // --- Pasamos las acciones ---
                         onSaveEdit={onSaveEdit}
                         onCancelEdit={onCancelEdit}
                         onEditClick={onEditClick}
