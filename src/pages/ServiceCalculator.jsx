@@ -99,13 +99,13 @@ function ServiceCalculator({ theme, toggleTheme }) {
         doc.setFont('helvetica', 'normal');
         doc.text(issuerData.name || '(Tu Nombre)', 14, 66);
         doc.text(issuerData.company || '(Tu Empresa)', 14, 72);
-        doc.text(issuerData.email || '(Tu Email)', 14, 78);
+        doc.text(issuerData.phone || '(Tu Celular)', 14, 78);
         doc.setFont('helvetica', 'bold');
         doc.text('PARA:', 105, 60);
         doc.setFont('helvetica', 'normal');
         doc.text(clientData.name || '(Nombre Cliente)', 105, 66);
         doc.text(clientData.company || '(Empresa Cliente)', 105, 72);
-        doc.text(clientData.email || '(Email Cliente)', 105, 78);
+        doc.text(clientData.phone || '(Celular Cliente)', 105, 78);
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
         doc.text('Presupuesto de Servicios', 105, 95, { align: 'center' });

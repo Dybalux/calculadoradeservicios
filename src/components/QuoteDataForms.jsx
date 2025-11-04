@@ -18,13 +18,21 @@ function QuoteDataForms({ clientData, issuerData, onClientChange, onIssuerChange
                 <h3 className={styles.title}>Datos del Cliente</h3>
                 <input name="name" placeholder="Nombre del Cliente" value={clientData.name} onChange={onClientChange} className={styles.input} />
                 <input name="company" placeholder="Empresa (Opcional)" value={clientData.company} onChange={onClientChange} className={styles.input} />
-                <input name="email" type="email" placeholder="Email (Opcional)" value={clientData.email} onChange={onClientChange} className={styles.input} />
+                <input 
+                    name="phone" // 👈 ANTES 'email'
+                    type="tel"   // 👈 ANTES 'email'
+                    placeholder="Celular (Opcional)" // 👈 ANTES 'Email (Opcional)'
+                    value={clientData.phone} // 👈 ANTES 'clientData.email'
+                    onChange={onClientChange} 
+                    className={styles.input} 
+                />
             </div>
             <div className={styles.formBox}>
                 <h3 className={styles.title}>Mis Datos (Emisor)</h3>
                 <input name="name" placeholder="Tu Nombre" value={issuerData.name} onChange={onIssuerChange} className={styles.input} />
                 <input name="company" placeholder="Tu Empresa (Opcional)" value={issuerData.company} onChange={onIssuerChange} className={styles.input} />
-                <input name="email" type="email" placeholder="Tu Email (Opcional)" value={issuerData.email} onChange={onIssuerChange} className={styles.input} />
+                <input name="phone" type="phone" placeholder="Tu Celular (Opcional)" value={issuerData.phone} onChange={onIssuerChange} className={styles.input} />
+                
                 <textarea
                     name="paymentMethods" placeholder="Métodos de pago (ej: CBU, Alias, etc.)"
                     value={issuerData.paymentMethods} onChange={onIssuerChange}

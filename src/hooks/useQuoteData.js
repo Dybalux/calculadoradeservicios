@@ -11,13 +11,13 @@ const getInitialIssuerData = () => {
         return {
             name: '',
             company: '',
-            email: '',
+            phone: '',
             paymentMethods: '',
             ...parsedIssuer
         };
     } catch (error) {
         console.error("Error al cargar datos del emisor", error);
-        return { name: '', company: '', email: '', paymentMethods: '' };
+        return { name: '', company: '', phone: '', paymentMethods: '' };
     }
 };
 
@@ -26,7 +26,7 @@ export function useQuoteData() {
     const [clientData, setClientData] = useState({
         name: '',
         company: '',
-        email: ''
+        phone: ''
     });
 
     // Los datos del emisor sí son persistentes
@@ -45,7 +45,7 @@ export function useQuoteData() {
     };
 
     const clearClientData = () => {
-        setClientData({ name: '', company: '', email: '' });
+        setClientData({ name: '', company: '', phone: '' });
     };
 
     return {

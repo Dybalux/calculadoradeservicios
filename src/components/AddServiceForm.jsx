@@ -49,7 +49,7 @@ function AddServiceForm({
                         name="quantity"
                         min="1"
                         step="1"
-                        placeholder="Cant."
+                        placeholder="Cant/Horas"
                         value={formState.quantity}
                         onChange={onFormChange}
                         className={`${styles.input} w-full sm:w-2/12`}
