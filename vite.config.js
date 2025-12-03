@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { VitePWA } from 'vite-plugin-pwa' // 👈 1. Importar
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -9,12 +9,12 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    
+
     // 👇 2. Agregar el plugin de PWA
     VitePWA({
       // Estrategia de actualización: se actualiza automáticamente
       registerType: 'autoUpdate',
-      
+
       // Habilitar en desarrollo para probar
       devOptions: {
         enabled: true
@@ -28,7 +28,7 @@ export default defineConfig({
         theme_color: '#1F2937', // Color de la barra de estado (modo oscuro)
         background_color: '#ffffff', // Color de fondo al iniciar
         display: 'standalone',
-        
+
         // 👇 Muy importante: Coincidir con tu config 'base'
         scope: '/calculadoradeservicios/',
         start_url: '/calculadoradeservicios/',
