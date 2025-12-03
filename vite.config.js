@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/calculadoradeservicios/",
+  base: "/ahijunaeventos/",
   plugins: [
     react(),
     tailwindcss(),
@@ -22,16 +22,16 @@ export default defineConfig({
 
       // Configuración del Manifest (el "ADN" de tu PWA)
       manifest: {
-        name: 'Calculadora de Servicios',
-        short_name: 'Calculadora',
-        description: 'Una app para calcular presupuestos de servicios.',
+        name: 'Ahijuna Eventos',
+        short_name: 'Ahijuna',
+        description: 'Gestión de Ahijuna Eventos',
         theme_color: '#1F2937', // Color de la barra de estado (modo oscuro)
         background_color: '#ffffff', // Color de fondo al iniciar
         display: 'standalone',
 
         // 👇 Muy importante: Coincidir con tu config 'base'
-        scope: '/calculadoradeservicios/',
-        start_url: '/calculadoradeservicios/',
+        scope: '/ahijunaeventos/',
+        start_url: '/ahijunaeventos/',
 
         // Iconos de la app (usa tu a.png de la carpeta public)
         icons: [

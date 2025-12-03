@@ -1,5 +1,4 @@
-// src/pages/Login.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../supabase/client';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -19,7 +18,7 @@ function Login() {
             email,
             options: {
                 // IMPORTANTE: Asegúrate que esta URL coincida con tu base en vite.config.js
-                emailRedirectTo: window.location.origin + '/calculadoradeservicios/agenda',
+                emailRedirectTo: window.location.origin + '/ahijunaeventos/eventos',
             },
         });
 

@@ -1,5 +1,6 @@
-// src/pages/ServiceCalculator.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabase/client';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import CatalogManagerModal from '../components/CatalogManagerModal';
@@ -11,6 +12,7 @@ import { useCatalogManager } from '../hooks/useCatalogManager';
 import { useServiceManager } from '../hooks/useServiceManager';
 import { useQuoteData } from '../hooks/useQuoteData';
 import companyLogo from '../assets/LogoAhijuna.png';
+import toast from 'react-hot-toast';
 
 // (Funciones getTodayDateString y formatDateForPDF sin cambios)
 const getTodayDateString = () => {
@@ -32,6 +34,7 @@ const formatDateForPDF = (dateString) => {
 
 // 2. Recibimos 'theme' y 'toggleTheme' como props (¡esto está bien!)
 function ServiceCalculator({ theme, toggleTheme }) {
+    const navigate = useNavigate(); // Hook para redirigir
     // --- Lógica de Hooks (sin el useTheme) ---
     const { clientData, issuerData, handleClientChange, handleIssuerChange } = useQuoteData();
     const { catalogServices, modalState, confirmModalState, catalogActions } = useCatalogManager();
@@ -147,7 +150,7 @@ function ServiceCalculator({ theme, toggleTheme }) {
         if (issuerData.paymentMethods) {
             doc.setFontSize(11);
             doc.setFont('helvetica', 'bold');
-            doc.text('Métodos de Pago:', 14, finalY + 40); 
+            doc.text('Métodos de Pago:', 14, finalY + 40);
             doc.setFont('helvetica', 'normal');
             const paymentLines = doc.splitTextToSize(issuerData.paymentMethods, 180);
             doc.text(paymentLines, 14, finalY + 46);
@@ -159,6 +162,52 @@ function ServiceCalculator({ theme, toggleTheme }) {
     const advanceAmount = parseFloat(advancePayment) || 0;
     const remainingBalance = subtotal - advanceAmount;
 
+    const handleScheduleEvent = async () => {
+        // 1. Validaciones básicas
+        if (services.length === 0) return toast.error("Agrega al menos un servicio.");
+        if (!clientData.name) return toast.error("Falta el nombre del cliente.");
+
+        // 2. Verificar usuario logueado
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return toast.error("Debes iniciar sesión para agendar.");
+
+        // 3. Confirmación
+        if (!confirm(`¿Agendar evento para el ${formatDateForPDF(quoteDate)}?`)) return;
+
+        // 4. Preparar Fechas (Por defecto: 13:00 a 17:00 del día seleccionado)
+        // (La calculadora solo tiene fecha, así que inventamos una hora por defecto)
+        const start = new Date(`${quoteDate}T13:00:00`);
+        const end = new Date(`${quoteDate}T17:00:00`);
+
+        // 5. Guardar en Supabase
+        const { error } = await supabase.from('events').insert([{
+            title: `Evento: ${clientData.name}`,
+            start_time: start.toISOString(),
+            end_time: end.toISOString(),
+            // 👇 AQUÍ ESTÁ LA CLAVE: Guardamos todo el detalle en el JSON
+            client_info: {
+                name: clientData.name,
+                company: clientData.company,
+                phone: clientData.phone,
+                services: services, // Guardamos la lista de servicios
+                total: subtotal,
+                advance: advancePayment
+            },
+            user_id: user.id,
+            status: advancePayment > 0 ? 'señado' : 'presupuestado' // Estado automático
+        }]);
+
+        if (error) {
+            toast.error("Error al agendar: " + error.message);
+        } else {
+            toast.success("¡Evento agendado exitosamente!");
+            // Opción de ir a la agenda
+            if (confirm("Evento creado. ¿Quieres ir a la Agenda para verlo?")) {
+                navigate('/eventos');
+            }
+        }
+    };
+
     // --- RENDERIZADO (Migrado a Tailwind) ---
     return (
         <div className="font-sans w-full max-w-3xl mx-auto p-5 sm:p-6 rounded-lg shadow-xl 
@@ -166,7 +215,7 @@ function ServiceCalculator({ theme, toggleTheme }) {
                       text-gray-900 dark:text-gray-100 
                       transition-colors duration-200"
         >
-            
+
             <CatalogManagerModal
                 show={modalState.show}
                 onClose={catalogActions.toggleModal}
@@ -188,7 +237,7 @@ function ServiceCalculator({ theme, toggleTheme }) {
                 onConfirm={catalogActions.confirmDelete}
                 onCancel={catalogActions.cancelDelete}
             />
-            
+
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-3xl font-bold text-center sm:text-left">Presupuesto</h2>
                 <div className="flex items-center justify-between sm:justify-end gap-4">
@@ -207,21 +256,21 @@ function ServiceCalculator({ theme, toggleTheme }) {
                         />
                     </div>
                     {/* --- 4. El botón ahora usa las PROPS 'theme' y 'toggleTheme' --- */}
-                    <button 
-                        onClick={toggleTheme} 
+                    <button
+                        onClick={toggleTheme}
                         className="p-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors self-end"
                         title={theme === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'}
                     >
-                        {theme === 'dark' ? 
-                            ( <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg> ) : 
-                            ( <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg> )
+                        {theme === 'dark' ?
+                            (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>) :
+                            (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>)
                         }
                     </button>
                 </div>
             </div>
-            
-            <button 
-                onClick={catalogActions.toggleModal} 
+
+            <button
+                onClick={catalogActions.toggleModal}
                 className="w-full p-2 bg-gray-500 text-white rounded-md cursor-pointer text-sm mb-6 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
             >
                 Administrar Catálogo de Servicios
@@ -258,7 +307,7 @@ function ServiceCalculator({ theme, toggleTheme }) {
                     <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">Subtotal:</span>
                     <span className="text-lg font-bold text-gray-800 dark:text-gray-100">${subtotal.toFixed(2)}</span>
                 </div>
-                
+
                 <div className="flex justify-between items-center mb-2">
                     <label htmlFor="advancePayment" className="text-lg font-semibold text-gray-700 dark:text-gray-300">
                         Seña/Adelanto:
@@ -286,7 +335,7 @@ function ServiceCalculator({ theme, toggleTheme }) {
                     </span>
                 </div>
             </div>
-            
+
             <button
                 onClick={handleGeneratePDF}
                 className="w-full p-3 bg-cyan-600 text-white rounded-md cursor-pointer text-lg font-medium mt-6 
@@ -298,18 +347,27 @@ function ServiceCalculator({ theme, toggleTheme }) {
             >
                 Generar Presupuesto PDF
             </button>
-            <button
-                onClick={handleClearQuote}
-                className="w-full p-2 bg-gray-500 text-white rounded-md cursor-pointer text-sm mt-3 
-                           hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors
-                           disabled:bg-gray-300 dark:disabled:bg-gray-800
-                           disabled:text-gray-500 dark:disabled:text-gray-600
-                           disabled:cursor-not-allowed"
-                // Se deshabilita si no hay nada que limpiar
-                disabled={services.length === 0 && clientData.name === '' && clientData.company === '' && clientData.email === '' && advancePayment === ''}
-            >
-                Limpiar Presupuesto
-            </button>
+
+            <div className="flex gap-2 mt-3">
+                <button
+                    onClick={handleScheduleEvent}
+                    className="flex-1 p-3 bg-indigo-600 text-white rounded-md cursor-pointer text-base font-medium 
+                               hover:bg-indigo-700 transition-colors shadow-sm
+                               disableds:bg-gray-400 dark:disabled:bg-gray-700"
+                    disabled={services.length === 0}
+                >
+                    📅 Reservar Fecha en Agenda
+                </button>
+
+                <button
+                    onClick={handleClearQuote}
+                    className="w-1/3 p-3 bg-gray-500 text-white rounded-md cursor-pointer text-base font-medium 
+                               hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+                    disabled={services.length === 0 && clientData.name === ''}
+                >
+                    Limpiar
+                </button>
+            </div>
         </div>
     );
 }
