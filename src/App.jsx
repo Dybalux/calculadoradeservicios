@@ -1,9 +1,9 @@
-// src/App.jsx
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import ServiceCalculator from './pages/ServiceCalculator';
 import Agenda from './pages/Agenda';
 import Login from './pages/Login';
+import Home from './pages/Home';
 import { Toaster } from 'react-hot-toast';
 import { useTheme } from './hooks/useTheme';
 import { supabase } from './supabase/client';
@@ -36,6 +36,9 @@ function App() {
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
 
             <div className="flex gap-6 items-center">
+              <Link to="/" className="text-xl font-bold text-gray-800 dark:text-white hover:text-blue-600 transition-colors">
+                Inicio
+              </Link>
               <Link to="/calculadoradeservicios" className="text-xl font-bold text-gray-800 dark:text-white hover:text-blue-600 transition-colors">
                 Calculadora
               </Link>
@@ -78,18 +81,16 @@ function App() {
 
         <div className="flex justify-center items-start p-4">
           <Routes>
-            {/* Si entran a /ahijunaeventos/, los mandamos a la calculadora por defecto */}
-            <Route path="/" element={<Navigate to="/calculadoradeservicios" replace />} />
+            <Route path="/" element={<Home />} />
             <Route path="/calculadoradeservicios" element={<ServiceCalculator theme={theme} toggleTheme={toggleTheme} />} />
             <Route path="/eventos" element={<Agenda />} />
 
             <Route
               path="/login"
-              // Al loguearse, ahora redirige a /eventos (Agenda)
               element={!user ? <Login /> : <Navigate to="/eventos" replace />}
             />
 
-            <Route path="*" element={<Navigate to="/calculadoradeservicios" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
 

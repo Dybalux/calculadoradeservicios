@@ -350,7 +350,7 @@ function ServiceCalculator({ theme, toggleTheme }) {
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
-                        <span className="text-3xl">🧮</span> Calculadora
+                        Calculadora
                     </h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Genera presupuestos profesionales</p>
                 </div>
