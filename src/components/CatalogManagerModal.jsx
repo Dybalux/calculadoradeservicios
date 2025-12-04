@@ -1,5 +1,3 @@
-// src/components/CatalogManagerModal.jsx
-
 import React from 'react';
 
 // Clases de Tailwind (actualizadas con dark:)
@@ -7,13 +5,13 @@ const styles = {
     overlay: "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[1001] p-4",
     content: "bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl text-gray-900 dark:text-gray-100 max-h-[90vh] flex flex-col",
     title: "text-2xl font-bold mb-4",
-    form: "mb-5", 
-    inputRow: "flex flex-col sm:flex-row gap-4 mb-0", 
-    inputGroup: "flex flex-col flex-1", 
+    form: "mb-5",
+    inputRow: "flex flex-col sm:flex-row gap-4 mb-0",
+    inputGroup: "flex flex-col flex-1",
     label: "block font-semibold mb-1 text-sm text-gray-700 dark:text-gray-300",
     input: "w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500",
     listTitle: "border-b border-gray-200 dark:border-gray-700 pb-2 mt-4 text-xl font-bold",
-    listContainer: "flex-1 overflow-y-auto", 
+    listContainer: "flex-1 overflow-y-auto",
     list: "list-none p-0",
     listItem: "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 py-3 px-2 border-b border-gray-200 dark:border-gray-700",
     listItemText: "text-gray-800 dark:text-gray-100",
@@ -34,7 +32,8 @@ function CatalogManagerModal({
     onDeleteClick,
     editingId,
     isSaving,
-    saveSuccess
+    saveSuccess,
+    onMigrateClick,
 }) {
 
     if (!show) {
@@ -44,6 +43,19 @@ function CatalogManagerModal({
     return (
         <div className={styles.overlay} onClick={onClose}>
             <div className={styles.content} onClick={(e) => e.stopPropagation()}>
+                {/* Cabecera con Botón de Migración */}
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold">Catálogo de Servicios</h2>
+
+                    {/* Botón Mágico de Migración */}
+                    <button
+                        onClick={onMigrateClick}
+                        className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 transition"
+                        title="Subir mis servicios guardados en este navegador a la nube"
+                    >
+                        Migrar Datos Locales
+                    </button>
+                </div>
                 <h2 className={styles.title}>Administrar Catálogo de Servicios</h2>
 
                 <form onSubmit={onSubmit} className={styles.form}>
@@ -52,9 +64,9 @@ function CatalogManagerModal({
                             <label htmlFor="catalog_name" className={styles.label}>Nombre:</label>
                             <input
                                 id="catalog_name"
-                                name="name" 
+                                name="name"
                                 placeholder="Ej: Diseño de Logo"
-                                value={formState.name} 
+                                value={formState.name}
                                 onChange={onFormChange}
                                 className={styles.input}
                             />
@@ -63,12 +75,12 @@ function CatalogManagerModal({
                             <label htmlFor="catalog_price" className={styles.label}>Precio ($):</label>
                             <input
                                 id="catalog_price"
-                                name="price" 
-                                type="number" 
-                                min="0.01" 
-                                step="0.01" 
+                                name="price"
+                                type="number"
+                                min="0.01"
+                                step="0.01"
                                 placeholder="Ej: 1500"
-                                value={formState.price} 
+                                value={formState.price}
                                 onChange={onFormChange}
                                 className={styles.input}
                             />
@@ -77,12 +89,12 @@ function CatalogManagerModal({
                             <label htmlFor="catalog_discount" className={styles.label}>Desc. %:</label>
                             <input
                                 id="catalog_discount"
-                                name="discount" 
-                                type="number" 
-                                min="0" 
-                                max="100" 
+                                name="discount"
+                                type="number"
+                                min="0"
+                                max="100"
                                 placeholder="Ej: 10"
-                                value={formState.discount} 
+                                value={formState.discount}
                                 onChange={onFormChange}
                                 className={styles.input}
                             />

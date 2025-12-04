@@ -1,22 +1,80 @@
-import { useState } from 'react';
-import usePersistentState from './usePersistentState';
+// src/hooks/useCatalogManager.js
+import { useState, useEffect } from 'react';
+import { supabase } from '../supabase/client';
 import toast from 'react-hot-toast';
 
 const CATALOG_SERVICES_STORAGE_KEY = 'calculator_catalog_services';
 
 export function useCatalogManager() {
-    const [catalogServices, setCatalogServices] = usePersistentState(CATALOG_SERVICES_STORAGE_KEY, []);
-    
+    const [catalogServices, setCatalogServices] = useState([]);
+    const [loading, setLoading] = useState(true);
+
     // Estados del modal
     const [showModal, setShowModal] = useState(false);
     const [catalogForm, setCatalogForm] = useState({ name: '', price: '', discount: '' });
     const [editingCatalogId, setEditingCatalogId] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
-    const [confirmState, setConfirmState] = useState({
-        isOpen: false,
-        idToDelete: null,
-    });
+    const [confirmState, setConfirmState] = useState({ isOpen: false, idToDelete: null });
+
+    // 1. Cargar catálogo desde Supabase al iniciar
+    useEffect(() => {
+        fetchCatalog();
+    }, []);
+
+    const fetchCatalog = async () => {
+        setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            setCatalogServices([]); // Si no hay usuario, lista vacía
+            setLoading(false);
+            return;
+        }
+
+        const { data, error } = await supabase
+            .from('catalog_services')
+            .select('*')
+            .order('name', { ascending: true });
+
+        if (error) {
+            console.error("Error cargando catálogo:", error);
+            toast.error("Error al cargar el catálogo");
+        } else {
+            setCatalogServices(data);
+        }
+        setLoading(false);
+    };
+
+    // --- FUNCIÓN DE MIGRACIÓN (De Local a Nube) ---
+    const migrateLocalData = async () => {
+        const localData = localStorage.getItem(CATALOG_SERVICES_STORAGE_KEY);
+        if (!localData) return toast("No hay datos locales para migrar.");
+
+        const parsedData = JSON.parse(localData);
+        if (parsedData.length === 0) return toast("El catálogo local está vacío.");
+
+        if (!confirm(`Se encontraron ${parsedData.length} servicios locales. ¿Subirlos a la nube?`)) return;
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return toast.error("Inicia sesión para migrar.");
+
+        const servicesToUpload = parsedData.map(s => ({
+            name: s.name,
+            price: s.price,
+            discount: s.discount || 0,
+            user_id: user.id
+        }));
+
+        const { error } = await supabase.from('catalog_services').insert(servicesToUpload);
+
+        if (error) {
+            toast.error("Error en la migración: " + error.message);
+        } else {
+            toast.success("¡Catálogo migrado con éxito!");
+            localStorage.removeItem(CATALOG_SERVICES_STORAGE_KEY); // Limpiamos local
+            fetchCatalog(); // Recargamos desde la nube
+        }
+    };
 
     // --- Acciones del Catálogo ---
     const toggleModal = () => {
@@ -29,50 +87,62 @@ export function useCatalogManager() {
         setCatalogForm({ ...catalogForm, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const price = parseFloat(catalogForm.price);
         const discount = parseFloat(catalogForm.discount) || 0;
 
         if (catalogForm.name.trim() === '' || isNaN(price) || price <= 0) {
-            toast.error('Por favor, ingresa un nombre y precio válido.');
+            toast.error('Por favor, ingresa datos válidos.');
             return;
         }
 
         setIsSaving(true);
         setSaveSuccess(false);
 
-        setTimeout(() => {
-            if (editingCatalogId) {
-                setCatalogServices(prevCatalog => 
-                    prevCatalog.map(s =>
-                        s.id === editingCatalogId
-                            ? { ...s, name: catalogForm.name.trim(), price: price, discount: discount }
-                            : s
-                    )
-                );
-            } else {
-                const newCatalogService = {
-                    id: Date.now(),
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            setIsSaving(false);
+            return toast.error("Debes iniciar sesión.");
+        }
+
+        let error;
+        if (editingCatalogId) {
+            // UPDATE
+            const { error: updateError } = await supabase
+                .from('catalog_services')
+                .update({ name: catalogForm.name.trim(), price: price, discount: discount })
+                .eq('id', editingCatalogId);
+            error = updateError;
+        } else {
+            // INSERT
+            const { error: insertError } = await supabase
+                .from('catalog_services')
+                .insert([{
                     name: catalogForm.name.trim(),
                     price: price,
-                    discount: discount
-                };
-                setCatalogServices(prevCatalog => [...prevCatalog, newCatalogService]);
-            }
-            
-            setEditingCatalogId(null);
-            setCatalogForm({ name: '', price: '', discount: '' });
-            setIsSaving(false);
+                    discount: discount,
+                    user_id: user.id
+                }]);
+            error = insertError;
+        }
+
+        setIsSaving(false);
+
+        if (error) {
+            toast.error("Error al guardar: " + error.message);
+        } else {
             setSaveSuccess(true);
-
-            toast.success(editingCatalogId ? '¡Servicio actualizado!' : '¡Servicio guardado!');
-            
+            toast.success(editingCatalogId ? 'Servicio actualizado' : 'Servicio guardado');
+            fetchCatalog(); // Recargar lista
             setTimeout(() => {
+                setEditingCatalogId(null);
+                setCatalogForm({ name: '', price: '', discount: '' });
                 setSaveSuccess(false);
-            }, 1500);
-
-        }, 1000);
+                // Opcional: cerrar modal automáticamente
+                // setShowModal(false); 
+            }, 1000);
+        }
     };
 
     const startEdit = (service) => {
@@ -82,40 +152,36 @@ export function useCatalogManager() {
             price: service.price.toString(),
             discount: (service.discount || 0).toString()
         });
+        // Si el modal no está abierto, abrirlo (depende de tu UX)
+        if (!showModal) setShowModal(true);
     };
-    
-    // Ya no borra, solo abre el modal de confirmación
+
     const deleteItem = (idToDelete) => {
-        setConfirmState({
-            isOpen: true,
-            idToDelete: idToDelete,
-        });
+        setConfirmState({ isOpen: true, idToDelete });
     };
 
-    // Cierra el modal de confirmación
     const cancelDelete = () => {
-        setConfirmState({
-            isOpen: false,
-            idToDelete: null,
-        });
+        setConfirmState({ isOpen: false, idToDelete: null });
     };
 
-    // Se ejecuta si el usuario confirma la eliminación
-    const confirmDelete = () => {
-        const itemToDelete = catalogServices.find(s => s.id === confirmState.idToDelete);
-        
-        setCatalogServices(prevCatalog => prevCatalog.filter(s => s.id !== confirmState.idToDelete));
-        
-        if (itemToDelete) {
-            toast.success(`"${itemToDelete.name}" eliminado del catálogo.`);
+    const confirmDelete = async () => {
+        const { error } = await supabase
+            .from('catalog_services')
+            .delete()
+            .eq('id', confirmState.idToDelete);
+
+        if (error) {
+            toast.error("Error al eliminar");
+        } else {
+            toast.success("Servicio eliminado.");
+            fetchCatalog();
         }
-        
-        // Cierra el modal
         cancelDelete();
     };
 
     return {
         catalogServices,
+        loading,
         modalState: {
             show: showModal,
             formState: catalogForm,
@@ -132,6 +198,7 @@ export function useCatalogManager() {
             deleteItem,
             cancelDelete,
             confirmDelete,
+            migrateLocalData, //  Exportamos la función de migración
         }
     };
 }

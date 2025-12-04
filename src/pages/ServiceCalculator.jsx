@@ -337,6 +337,7 @@ function ServiceCalculator({ theme, toggleTheme }) {
                 editingId={modalState.editingId}
                 isSaving={modalState.isSaving}
                 saveSuccess={modalState.saveSuccess}
+                onMigrateClick={catalogActions.migrateLocalData}
             />
 
             <ConfirmModal

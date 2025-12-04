@@ -174,4 +174,4 @@ function AddEventModal({ isOpen, onClose, onSave, onDelete, initialDate, eventTo
     );
 }
 
-export default AddEventModal; 
+export default AddEventModal;
