@@ -29,7 +29,7 @@ function App() {
   };
 
   return (
-    <BrowserRouter basename="/ahijunaeventos/">
+    <BrowserRouter basename="/servicios/">
       <div className="min-h-screen w-full bg-gray-100 dark:bg-gray-900 transition-colors duration-200 font-sans">
 
         <nav className="bg-white dark:bg-gray-800 shadow-md p-4 mb-4">

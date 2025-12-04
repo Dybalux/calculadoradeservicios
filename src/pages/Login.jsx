@@ -18,7 +18,7 @@ function Login() {
             email,
             options: {
                 // IMPORTANTE: Asegúrate que esta URL coincida con tu base en vite.config.js
-                emailRedirectTo: window.location.origin + '/ahijunaeventos/eventos',
+                emailRedirectTo: window.location.origin + '/servicios/eventos',
             },
         });
 

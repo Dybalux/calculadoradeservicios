@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/ahijunaeventos/",
+  base: "/servicios/",
   plugins: [
     react(),
     tailwindcss(),
@@ -30,8 +30,8 @@ export default defineConfig({
         display: 'standalone',
 
         // 👇 Muy importante: Coincidir con tu config 'base'
-        scope: '/ahijunaeventos/',
-        start_url: '/ahijunaeventos/',
+        scope: '/servicios/',
+        start_url: '/servicios/',
 
         // Iconos de la app (usa tu a.png de la carpeta public)
         icons: [
