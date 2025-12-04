@@ -1,2 +1,2 @@
 #Pagina
-https://dybalux.github.io/calculadoradeservicios/
+https://dybalux.github.io/servicios/
