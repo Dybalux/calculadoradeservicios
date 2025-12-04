@@ -1,5 +1,5 @@
 // src/pages/ServiceCalculator.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';

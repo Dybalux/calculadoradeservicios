@@ -85,7 +85,7 @@ function Agenda() {
 
             // 2. Mezclamos la info existente con el nuevo nombre
             const updatedClientInfo = {
-                ...originalEvent.client_info, // Mantiene services, total, etc.
+                ...(originalEvent?.client_info || {}), // Mantiene services, total, etc.
                 name: eventData.client_name   // Actualiza solo el nombre si cambió
             };
             const { error } = await supabase
