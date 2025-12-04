@@ -94,7 +94,7 @@ function App() {
           </Routes>
         </div>
 
-        <Toaster position="bottom-right" theme="system" />
+        <Toaster position="bottom-right" theme={theme} />
       </div>
     </BrowserRouter>
   );
