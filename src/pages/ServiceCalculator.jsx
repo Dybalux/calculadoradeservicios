@@ -106,6 +106,7 @@ function ServiceCalculator({ theme, toggleTheme }) {
     };
 
     // --- HANDLER DEL BOTÓN "RESERVAR FECHA" ---
+    // --- HANDLER DEL BOTÓN "RESERVAR FECHA" ---
     const handleScheduleEvent = async () => {
         if (services.length === 0) return toast.error("Agrega al menos un servicio.");
         if (!clientData.name) return toast.error("Falta el nombre del cliente.");
@@ -113,7 +114,15 @@ function ServiceCalculator({ theme, toggleTheme }) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return toast.error("Debes iniciar sesión para agendar.");
 
-        // 👇 AQUI ESTA EL CAMBIO: Usamos toast custom en vez de confirm()
+        // Limpiamos los servicios para guardar solo los datos puros (sin funciones ni referencias extrañas)
+        const cleanServices = services.map(s => ({
+            id: s.id,
+            name: s.name,
+            price: s.price,
+            quantity: s.quantity,
+            discount: s.discount
+        }));
+
         toast((t) => (
             <div className="flex flex-col items-center gap-3 min-w-[250px]">
                 <p className="font-semibold text-gray-800 dark:text-gray-200 text-center">
@@ -128,9 +137,56 @@ function ServiceCalculator({ theme, toggleTheme }) {
                     </button>
                     <button
                         className="px-3 py-1 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded transition shadow-sm"
-                        onClick={() => {
+                        onClick={async () => {
                             toast.dismiss(t.id);
-                            performScheduleEvent(); // Llamamos a la función real
+
+                            // Lógica de guardado movida aquí dentro para asegurar ejecución secuencial
+                            const start = new Date(`${quoteDate}T13:00:00`);
+                            const end = new Date(`${quoteDate}T17:00:00`);
+
+                            const { error } = await supabase.from('events').insert([{
+                                title: `Evento: ${clientData.name}`,
+                                start_time: start.toISOString(),
+                                end_time: end.toISOString(),
+                                client_info: {
+                                    name: clientData.name,
+                                    company: clientData.company,
+                                    phone: clientData.phone,
+                                    services: cleanServices, // 👈 USAMOS LA VERSIÓN LIMPIA
+                                    total: subtotal,
+                                    advance: advancePayment
+                                },
+                                user_id: user.id,
+                                status: advancePayment > 0 ? 'señado' : 'presupuestado'
+                            }]);
+
+                            if (error) {
+                                console.error("Supabase error:", error); // Log para ver detalles en consola
+                                toast.error("Error al agendar: " + error.message);
+                            } else {
+                                toast.success("¡Evento agendado exitosamente!");
+
+                                // Preguntar si quiere ir a la agenda
+                                toast((t2) => (
+                                    <div className="flex flex-col gap-2">
+                                        <span>Evento creado. ¿Ir a la Agenda?</span>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => { toast.dismiss(t2.id); navigate('/eventos'); }}
+                                                className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                                            >
+                                                Ir a Agenda
+                                            </button>
+                                            <button
+                                                onClick={() => toast.dismiss(t2.id)}
+                                                className="bg-gray-200 text-gray-800 px-3 py-1 rounded text-sm"
+                                            >
+                                                Quedarse
+                                            </button>
+                                        </div>
+                                    </div>
+                                ), { duration: 5000 });
+                            }
                         }}
                     >
                         Sí, Agendar
@@ -140,20 +196,13 @@ function ServiceCalculator({ theme, toggleTheme }) {
         ), {
             duration: 5000,
             position: 'top-center',
-            style: {
-                background: 'var(--toast-bg, #fff)',
-                color: 'var(--toast-text, #333)',
-                padding: '16px',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-            },
             className: "dark:bg-gray-800 dark:text-white"
         });
     };
 
     // --- HANDLER DEL BOTÓN "LIMPIAR" ---
     const handleClearQuote = () => {
-        // 👇 TAMBIÉN ACTUALIZAMOS ESTE para usar toast
+        // TAMBIÉN ACTUALIZAMOS ESTE para usar toast
         toast((t) => (
             <div className="flex flex-col items-center gap-3 min-w-[250px]">
                 <p className="font-semibold text-gray-800 dark:text-gray-200 text-center">
