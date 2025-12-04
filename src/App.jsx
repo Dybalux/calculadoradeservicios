@@ -33,7 +33,7 @@ function App() {
     <BrowserRouter basename="/servicios/">
       <div className="min-h-screen w-full bg-gray-100 dark:bg-gray-900 transition-colors duration-200 font-sans text-gray-900 dark:text-gray-100">
 
-        <nav className="bg-white dark:bg-gray-800 shadow-md p-4 mb-4">
+        <nav className="bg-white dark:bg-gray-800 shadow-md p-4 mb-8">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex gap-6 items-center">
               <Link to="/" className="text-xl font-bold text-gray-800 dark:text-white hover:text-blue-600 transition-colors">
