@@ -1,10 +1,11 @@
+// src/App.jsx
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import ServiceCalculator from './pages/ServiceCalculator';
 import Agenda from './pages/Agenda';
 import Login from './pages/Login';
 import Home from './pages/Home';
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast'; // Importamos Toaster
 import { useTheme } from './hooks/useTheme';
 import { supabase } from './supabase/client';
 
@@ -30,11 +31,10 @@ function App() {
 
   return (
     <BrowserRouter basename="/servicios/">
-      <div className="min-h-screen w-full bg-gray-100 dark:bg-gray-900 transition-colors duration-200 font-sans">
+      <div className="min-h-screen w-full bg-gray-100 dark:bg-gray-900 transition-colors duration-200 font-sans text-gray-900 dark:text-gray-100">
 
         <nav className="bg-white dark:bg-gray-800 shadow-md p-4 mb-4">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-
             <div className="flex gap-6 items-center">
               <Link to="/" className="text-xl font-bold text-gray-800 dark:text-white hover:text-blue-600 transition-colors">
                 Inicio
@@ -84,17 +84,36 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/calculadoradeservicios" element={<ServiceCalculator theme={theme} toggleTheme={toggleTheme} />} />
             <Route path="/eventos" element={<Agenda />} />
-
-            <Route
-              path="/login"
-              element={!user ? <Login /> : <Navigate to="/eventos" replace />}
-            />
-
+            <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
 
-        <Toaster position="bottom-right" theme={theme} />
+        <Toaster
+          position="bottom-center" // O bottom-right
+          toastOptions={{
+            // Estilos por defecto
+            style: {
+              background: theme === 'dark' ? '#1f2937' : '#ffffff',
+              color: theme === 'dark' ? '#fff' : '#000',
+              border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb',
+            },
+            // Estilos específicos para éxito
+            success: {
+              iconTheme: {
+                primary: '#10b981',
+                secondary: theme === 'dark' ? '#1f2937' : 'white',
+              },
+            },
+            // Estilos específicos para error
+            error: {
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: theme === 'dark' ? '#1f2937' : 'white',
+              },
+            },
+          }}
+        />
       </div>
     </BrowserRouter>
   );
