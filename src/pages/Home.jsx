@@ -22,47 +22,54 @@ function Home() {
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
-            // 👇 CORRECCIÓN: Si no hay usuario, cortamos pero apagamos el loading
             if (!user) {
                 setLoading(false);
                 return;
             }
 
-            // 1. Traemos TODOS los eventos del usuario
-            const { data: events, error } = await supabase
+            // Verificar si el usuario es admin
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single();
+
+            const isAdmin = profile?.role === 'admin';
+
+            // Si es admin, cargar TODOS los eventos; si no, solo los suyos
+            let query = supabase
                 .from('events')
                 .select('*')
-                .eq('user_id', user.id)
                 .order('start_time', { ascending: true });
+
+            if (!isAdmin) {
+                query = query.eq('user_id', user.id);
+            }
+
+            const { data: events, error } = await query;
 
             if (error) {
                 console.error('Error cargando dashboard:', error);
-                // No retornamos aquí para permitir que setLoading se ejecute al final
             } else {
-                // --- CÁLCULOS MATEMÁTICOS ---
                 let totalRev = 0;
                 let pending = 0;
                 const eventsByMonth = {};
 
-                // Filtramos eventos futuros para la lista "Próximos"
                 const now = new Date();
                 const nextEventsList = events
                     .filter(e => new Date(e.start_time) >= now)
-                    .slice(0, 3); // Solo los próximos 3
+                    .slice(0, 5); // Aumenté a 5 para que veas más próximos
 
                 events.forEach(event => {
-                    // Sumar Totales (extraídos del JSON client_info)
                     const info = event.client_info || {};
                     const total = parseFloat(info.total || 0);
                     const advance = parseFloat(info.advance || 0);
 
-                    // Solo sumamos dinero de eventos confirmados/seña (no presupuestos perdidos)
                     if (event.status === 'señado' || event.status === 'confirmado') {
                         totalRev += total;
                         pending += (total - advance);
                     }
 
-                    // Agrupar para el Gráfico (Mes y Año)
                     const date = new Date(event.start_time);
                     const monthKey = `${date.getMonth() + 1}/${date.getFullYear()}`;
 
@@ -72,7 +79,6 @@ function Home() {
                     eventsByMonth[monthKey].cantidad += 1;
                 });
 
-                // Convertir objeto de meses a array para el gráfico
                 const chartArray = Object.values(eventsByMonth);
 
                 setStats({
@@ -86,7 +92,6 @@ function Home() {
         } catch (error) {
             console.error("Error inesperado:", error);
         } finally {
-            // 👇 ESTO ES CLAVE: El loading se apaga SIEMPRE, haya error o no
             setLoading(false);
         }
     };
@@ -104,7 +109,6 @@ function Home() {
                 </Link>
             </div>
 
-            {/* --- TARJETAS DE RESUMEN --- */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border-l-4 border-blue-500">
                     <h3 className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase">Eventos Totales</h3>
@@ -115,7 +119,7 @@ function Home() {
                     <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
                         ${stats.totalRevenue.toLocaleString()}
                     </p>
-                    <span className="text-xs text-gray-400">Total de eventos cerrados</span>
+                    <span className="text-xs text-gray-400">Total de contratos cerrados</span>
                 </div>
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border-l-4 border-yellow-500">
                     <h3 className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase">Saldo Pendiente</h3>
@@ -128,7 +132,6 @@ function Home() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                {/* --- GRÁFICO --- */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                     <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Eventos por Mes</h3>
                     <div className="h-64">
@@ -152,27 +155,52 @@ function Home() {
                     </div>
                 </div>
 
-                {/* --- PRÓXIMOS EVENTOS --- */}
+                {/* --- SECCIÓN PRÓXIMOS EVENTOS (MEJORADA) --- */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                     <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Próximos Eventos 📅</h3>
                     {stats.nextEvents.length === 0 ? (
                         <p className="text-gray-500">No hay eventos próximos agendados.</p>
                     ) : (
                         <ul className="space-y-4">
-                            {stats.nextEvents.map(event => (
-                                <li key={event.id} className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2">
-                                    <div>
-                                        <p className="font-bold text-gray-800 dark:text-white">{event.title}</p>
-                                        <p className="text-sm text-gray-500">
-                                            {new Date(event.start_time).toLocaleDateString()} - {new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}hs
-                                        </p>
-                                    </div>
-                                    <span className={`px-2 py-1 text-xs rounded-full 
-                                        ${event.status === 'señado' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
-                                        {event.status ? event.status.toUpperCase() : 'PENDIENTE'}
-                                    </span>
-                                </li>
-                            ))}
+                            {stats.nextEvents.map(event => {
+                                // Cálculos individuales para cada fila
+                                const info = event.client_info || {};
+                                const total = parseFloat(info.total || 0);
+                                const advance = parseFloat(info.advance || 0);
+                                const debt = total - advance;
+
+                                return (
+                                    <li key={event.id} className="flex justify-between items-start border-b border-gray-200 dark:border-gray-700 pb-3">
+                                        {/* Izquierda: Título y Fecha */}
+                                        <div>
+                                            <p className="font-bold text-gray-800 dark:text-white">{event.title}</p>
+                                            <p className="text-sm text-gray-500">
+                                                {new Date(event.start_time).toLocaleDateString()} - {new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}hs
+                                            </p>
+                                        </div>
+
+                                        {/* Derecha: Estado y Deuda */}
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className={`px-2 py-0.5 text-xs rounded-full font-medium
+                                                ${event.status === 'señado' ? 'bg-orange-100 text-orange-700' :
+                                                    event.status === 'confirmado' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                                {event.status ? event.status.toUpperCase() : 'PENDIENTE'}
+                                            </span>
+
+                                            {/* Mostrar deuda si existe */}
+                                            {debt > 0 ? (
+                                                <span className="text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded">
+                                                    Debe: ${debt.toLocaleString()}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded">
+                                                    Pagado
+                                                </span>
+                                            )}
+                                        </div>
+                                    </li>
+                                );
+                            })}
                         </ul>
                     )}
                     <div className="mt-4 text-right">

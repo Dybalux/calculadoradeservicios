@@ -31,10 +31,26 @@ export function useCatalogManager() {
             return;
         }
 
-        const { data, error } = await supabase
+        // Verificar si el usuario es admin
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        const isAdmin = profile?.role === 'admin';
+
+        // Si es admin, cargar TODOS los servicios; si no, solo los suyos
+        let query = supabase
             .from('catalog_services')
             .select('*')
             .order('name', { ascending: true });
+
+        if (!isAdmin) {
+            query = query.eq('user_id', user.id);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
             console.error("Error cargando catálogo:", error);

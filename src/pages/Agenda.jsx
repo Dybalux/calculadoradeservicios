@@ -189,7 +189,7 @@ function Agenda() {
     return (
         <div className="p-4 h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-3xl font-bold">Agenda de Eventos</h2>
+                <h1 className="text-3xl font-bold ">Agenda de Eventos</h1>
                 {isAdmin && (
                     <button
                         onClick={() => {
