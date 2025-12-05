@@ -96,7 +96,7 @@ function Home() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Cargando estadÃ­sticas...</div>;
+    if (loading) return <div className="p-8 text-center text-gray-500">Cargando estadísticas...</div>;
 
     return (
         <div className="p-6 max-w-6xl mx-auto space-y-8">
