@@ -187,9 +187,9 @@ function Agenda() {
 
     // --- RENDER ---
     return (
-        <div className="p-4 h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-                <h1 className="text-3xl font-bold ">Agenda de Eventos</h1>
+        <div className="p-0 sm:p-4 h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col">
+            <div className="flex justify-between items-center mb-2 sm:mb-4 px-2 py-2 sm:px-0 sm:py-0">
+                <h1 className="text-xl sm:text-3xl font-bold">Agenda de Eventos</h1>
                 {isAdmin && (
                     <button
                         onClick={() => {
@@ -197,14 +197,14 @@ function Agenda() {
                             setSelectedDate(new Date());
                             setIsModalOpen(true);
                         }}
-                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+                        className="bg-green-600 text-white px-2 py-1 sm:px-4 sm:py-2 rounded hover:bg-green-700 transition text-xs sm:text-base whitespace-nowrap"
                     >
-                        + Nuevo Evento
+                        + Nuevo
                     </button>
                 )}
             </div>
 
-            <div className="flex-1 bg-white text-black p-4 rounded-lg shadow-lg relative">
+            <div className="flex-1 bg-white text-black p-0 sm:p-4 rounded-none sm:rounded-lg shadow-none sm:shadow-lg relative">
                 <DnDCalendar
                     localizer={localizer}
                     events={events}
