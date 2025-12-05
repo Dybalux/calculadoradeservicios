@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+﻿// src/pages/Home.jsx
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase/client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
@@ -57,14 +58,14 @@ function Home() {
                 const now = new Date();
                 const nextEventsList = events
                     .filter(e => new Date(e.start_time) >= now)
-                    .slice(0, 5); // Aumente a 5 para que veas mas proximos
+                    .slice(0, 5); // AumentÃ© a 5 para que veas mÃ¡s prÃ³ximos
 
                 events.forEach(event => {
                     const info = event.client_info || {};
                     const total = parseFloat(info.total || 0);
                     const advance = parseFloat(info.advance || 0);
 
-                    if (event.status === 'señado' || event.status === 'confirmado') {
+                    if (event.status === 'seÃ±ado' || event.status === 'confirmado') {
                         totalRev += total;
                         pending += (total - advance);
                     }
@@ -101,10 +102,10 @@ function Home() {
         <div className="p-6 max-w-6xl mx-auto space-y-8">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-                    Panel de Control
+                    Panel de Control ðŸ“Š
                 </h1>
-                <Link to="/calculadoradeservicios" className="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">
-                    Nuevo Presupuesto
+                <Link to="/calculadoradeservicios" className="text-blue-600 hover:underline">
+                    + Nuevo Presupuesto
                 </Link>
             </div>
 
@@ -118,7 +119,7 @@ function Home() {
                     <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
                         ${stats.totalRevenue.toLocaleString()}
                     </p>
-                    <span className="text-xs text-gray-400">Total de eventos cerrados</span>
+                    <span className="text-xs text-gray-400">Total de contratos cerrados</span>
                 </div>
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border-l-4 border-yellow-500">
                     <h3 className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase">Saldo Pendiente</h3>
@@ -148,21 +149,21 @@ function Home() {
                             </ResponsiveContainer>
                         ) : (
                             <div className="h-full flex items-center justify-center text-gray-400">
-                                Aun no hay datos para graficar
+                                AÃºn no hay datos para graficar
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* --- SECCION PROXIMOS EVENTOS (MEJORADA) --- */}
+                {/* --- SECCIÃ“N PRÃ“XIMOS EVENTOS (MEJORADA) --- */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Proximos Eventos</h3>
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">PrÃ³ximos Eventos ðŸ“…</h3>
                     {stats.nextEvents.length === 0 ? (
-                        <p className="text-gray-500">No hay eventos proximos agendados.</p>
+                        <p className="text-gray-500">No hay eventos prÃ³ximos agendados.</p>
                     ) : (
                         <ul className="space-y-4">
                             {stats.nextEvents.map(event => {
-                                // Calculos individuales para cada fila
+                                // CÃ¡lculos individuales para cada fila
                                 const info = event.client_info || {};
                                 const total = parseFloat(info.total || 0);
                                 const advance = parseFloat(info.advance || 0);
@@ -170,7 +171,7 @@ function Home() {
 
                                 return (
                                     <li key={event.id} className="flex justify-between items-start border-b border-gray-200 dark:border-gray-700 pb-3">
-                                        {/* Izquierda: Titulo y Fecha */}
+                                        {/* Izquierda: TÃ­tulo y Fecha */}
                                         <div>
                                             <p className="font-bold text-gray-800 dark:text-white">{event.title}</p>
                                             <p className="text-sm text-gray-500">
@@ -181,7 +182,7 @@ function Home() {
                                         {/* Derecha: Estado y Deuda */}
                                         <div className="flex flex-col items-end gap-1">
                                             <span className={`px-2 py-0.5 text-xs rounded-full font-medium
-                                                ${event.status === 'señado' ? 'bg-orange-100 text-orange-700' :
+                                                ${event.status === 'seÃ±ado' ? 'bg-orange-100 text-orange-700' :
                                                     event.status === 'confirmado' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                                                 {event.status ? event.status.toUpperCase() : 'PENDIENTE'}
                                             </span>
@@ -203,7 +204,7 @@ function Home() {
                         </ul>
                     )}
                     <div className="mt-4 text-right">
-                        <Link to="/eventos" className="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Ver Agenda Completa</Link>
+                        <Link to="/eventos" className="text-blue-500 hover:underline text-sm">Ver Agenda Completa â†’</Link>
                     </div>
                 </div>
             </div>
