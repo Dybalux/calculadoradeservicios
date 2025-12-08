@@ -1,4 +1,3 @@
-// src/App.jsx
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import ServiceCalculator from './pages/ServiceCalculator';
@@ -90,7 +89,7 @@ function App() {
         </div>
 
         <Toaster
-          position="bottom-center" // O bottom-right
+          position="bottom-center" 
           toastOptions={{
             // Estilos por defecto
             style: {

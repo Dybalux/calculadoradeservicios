@@ -1,7 +1,5 @@
-// src/components/QuoteDataForms.jsx
 import React from 'react';
 
-// ... (styles se mantienen igual)
 const styles = {
     container: "flex flex-col md:flex-row justify-between gap-6 mb-6",
     formBox: "flex-1 border border-gray-200 dark:border-gray-700 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50",
@@ -25,7 +23,6 @@ function QuoteDataForms({ clientData, issuerData, onClientChange, onIssuerChange
                 <input name="name" placeholder="Tu Nombre" value={issuerData.name} onChange={onIssuerChange} className={styles.input} />
                 <input name="company" placeholder="Tu Empresa (Opcional)" value={issuerData.company} onChange={onIssuerChange} className={styles.input} />
 
-                {/* 👇 Input de Teléfono (sin Email) */}
                 <input
                     name="phone"
                     type="tel"

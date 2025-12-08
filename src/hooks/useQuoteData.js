@@ -1,4 +1,3 @@
-// src/hooks/useQuoteData.js
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase/client';
 import toast from 'react-hot-toast';
@@ -6,18 +5,17 @@ import toast from 'react-hot-toast';
 const ISSUER_STORAGE_KEY = 'calculator_issuer_data';
 
 export function useQuoteData() {
-    // 1. Datos del Cliente
+    // Datos del Cliente
     const [clientData, setClientData] = useState({
         name: '',
         company: '',
         phone: ''
     });
 
-    // 2. Datos del Emisor (Sin email)
+    // Datos del Emisor (Sin email)
     const [issuerData, setIssuerData] = useState({
         name: '',
         company: '',
-        // email: '',  <-- ELIMINADO
         phone: '',
         paymentMethods: ''
     });
@@ -25,7 +23,7 @@ export function useQuoteData() {
     const [loadingIssuer, setLoadingIssuer] = useState(true);
     const saveTimeoutRef = useRef(null);
 
-    // --- CARGAR DATOS AL INICIO ---
+    // CARGAR DATOS AL INICIO 
     useEffect(() => {
         fetchIssuerData();
     }, []);

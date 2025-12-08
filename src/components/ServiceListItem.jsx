@@ -1,5 +1,3 @@
-// src/components/ServiceListItem.jsx
-
 import React from 'react';
 
 // Clases de Tailwind (actualizadas con dark: y anchos válidos)
@@ -35,7 +33,6 @@ function ServiceListItem({
             className={`${styles.serviceItem} ${isEditing ? 'justify-start' : 'justify-between'}`}
         >
             {isEditing ? (
-                // --- 👇 CORRECCIÓN: Modo Edición Responsivo con anchos válidos ---
                 <>
                     <input
                         type="text"

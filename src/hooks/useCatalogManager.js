@@ -17,7 +17,7 @@ export function useCatalogManager() {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [confirmState, setConfirmState] = useState({ isOpen: false, idToDelete: null });
 
-    // 1. Cargar catálogo desde Supabase al iniciar
+    // Cargar catálogo desde Supabase al iniciar
     useEffect(() => {
         fetchCatalog();
     }, []);

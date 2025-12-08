@@ -1,5 +1,3 @@
-// src/components/AddServiceForm.jsx
-
 import React from 'react';
 
 // Clases de Tailwind (actualizadas con dark: y anchos válidos)
@@ -35,7 +33,6 @@ function AddServiceForm({
                 </select>
 
                 <div className={styles.inputGroup}>
-                    {/* --- 👇 CORRECCIÓN: Clases de ancho fraccional (w-N/12) --- */}
                     <input
                         type="text"
                         name="name" 

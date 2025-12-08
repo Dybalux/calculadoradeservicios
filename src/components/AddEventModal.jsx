@@ -1,4 +1,3 @@
-// src/components/AddEventModal.jsx
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
@@ -61,7 +60,6 @@ function AddEventModal({ isOpen, onClose, onSave, onDelete, initialDate, eventTo
         onClose();
     };
 
-    // 👇 ESTA FUNCIÓN FALTABA EN TU CÓDIGO ANTERIOR
     const handleDelete = () => {
         // Lanzamos el toast interactivo
         toast((t) => (

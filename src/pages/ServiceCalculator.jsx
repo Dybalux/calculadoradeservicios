@@ -1,4 +1,3 @@
-// src/pages/ServiceCalculator.jsx
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
@@ -105,7 +104,6 @@ function ServiceCalculator({ theme, toggleTheme }) {
         }
     };
 
-    // --- HANDLER DEL BOTÓN "RESERVAR FECHA" ---
     // --- HANDLER DEL BOTÓN "RESERVAR FECHA" ---
     const handleScheduleEvent = async () => {
         if (services.length === 0) return toast.error("Agrega al menos un servicio.");

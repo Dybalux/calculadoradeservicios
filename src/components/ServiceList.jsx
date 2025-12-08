@@ -1,5 +1,3 @@
-// src/components/ServiceList.jsx
-
 import React from 'react';
 import ServiceListItem from './ServiceListItem';
 

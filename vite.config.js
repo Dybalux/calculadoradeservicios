@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
 
-    // 👇 2. Agregar el plugin de PWA
+    // Agregar el plugin de PWA
     VitePWA({
       // Estrategia de actualización: se actualiza automáticamente
       registerType: 'autoUpdate',
@@ -20,7 +20,7 @@ export default defineConfig({
         enabled: true
       },
 
-      // Configuración del Manifest (el "ADN" de tu PWA)
+      // Configuración del Manifest (PWA)
       manifest: {
         name: 'Ahijuna Eventos',
         short_name: 'Ahijuna',
@@ -29,7 +29,7 @@ export default defineConfig({
         background_color: '#ffffff', // Color de fondo al iniciar
         display: 'standalone',
 
-        // 👇 Muy importante: Coincidir con tu config 'base'
+        // Muy importante: Coincidir con tu config 'base'
         scope: '/servicios/',
         start_url: '/servicios/',
 

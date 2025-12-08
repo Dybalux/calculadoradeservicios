@@ -1,4 +1,3 @@
-// src/hooks/useTheme.js
 import { useEffect, useState } from 'react';
 import usePersistentState from './usePersistentState';
 
@@ -6,15 +5,15 @@ import usePersistentState from './usePersistentState';
 const getSystemPreference = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
 export function useTheme() {
-    // 1. El estado guardado puede ser 'light', 'dark', o 'system'
+    // El estado guardado puede ser 'light', 'dark', o 'system'
     const [savedTheme, setSavedTheme] = usePersistentState('theme', 'system');
     
-    // 2. Estado interno para saber qué se está mostrando AHORA MISMO
+    // Estado interno para saber qué se está mostrando AHORA MISMO
     const [effectiveTheme, setEffectiveTheme] = useState(() => 
         savedTheme === 'system' ? getSystemPreference() : savedTheme
     );
 
-    // 3. Este efecto aplica la clase al <html> y actualiza el estado 'effectiveTheme'
+    // Este efecto aplica la clase al <html> y actualiza el estado 'effectiveTheme'
     useEffect(() => {
         const root = window.document.documentElement;
         const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -46,7 +45,6 @@ export function useTheme() {
 
     }, [savedTheme]); // Solo se re-ejecuta si el usuario cambia la config
 
-    // 4. EL ARREGLO ESTÁ AQUÍ
     const toggleTheme = () => {
         // Al hacer toggle, basamos la decisión en el tema *efectivo* (lo que se ve)
         // y seteamos el tema a uno explícito ('light' o 'dark'), 
@@ -54,6 +52,6 @@ export function useTheme() {
         setSavedTheme(effectiveTheme === 'light' ? 'dark' : 'light');
     };
 
-    // 5. Exponemos el tema EFECTIVO para que el ícono sea correcto
+    // Exponemos el tema EFECTIVO para que el ícono sea correcto
     return { theme: effectiveTheme, toggleTheme };
 }
