@@ -6,7 +6,7 @@ Descripción
 - Sitio responsive siguiendo el principio de diseño Mobile First.
 - Funcionalidades destacadas: Dashboard, calculadora de presupuestos, carga/gestión de presupuestos, generación de PDF y agenda de eventos.
 
-Imágenes de la página funcionando
+Imágenes de la página funcional
 
 ## Dashboard
 ![Dashboard](https://github.com/user-attachments/assets/ab444e19-8a59-457a-89b3-403dd5279f47)
